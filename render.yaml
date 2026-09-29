@@ -1,4 +1,4 @@
-# Render blueprint for the IE Suite backend (FastAPI + SimPy).
+﻿# Render blueprint for the IE Suite backend (FastAPI + SimPy).
 #
 # This defines the API service only. The frontend is hosted separately on
 # GitHub Pages, so this service serves the API and does not need to build the
@@ -20,6 +20,6 @@ services:
       - key: ENV
         value: production
       - key: CORS_ALLOW_ORIGINS
-        value: https://LQWYSLZG.github.io
+        value: https://lqwyslzg.github.io
       - key: PYTHON_VERSION
         value: "3.11"
