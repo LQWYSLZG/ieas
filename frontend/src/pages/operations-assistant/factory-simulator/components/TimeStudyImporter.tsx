@@ -72,6 +72,12 @@ export function TimeStudyImporter() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Server waking up" hint: when an import has not resolved within a few
+  // seconds it is likely a Render free-tier cold start, so we show a small
+  // non-blocking note. The timeout id is kept in a ref so it can be cleared
+  // reliably in the finally block.
+  const [isWakingServer, setIsWakingServer] = useState(false);
+  const wakingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [report, setReport] = useState<ImportReportEntry[] | null>(null);
   const [importedName, setImportedName] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState(0);
@@ -98,7 +104,11 @@ export function TimeStudyImporter() {
   async function importFiles(files: File[]) {
     if (files.length === 0) return;
     setError(null);
+    setIsWakingServer(false);
     setIsImporting(true);
+    // If the import has not resolved within 4 seconds, assume the backend is
+    // waking up from idle and show a small non-blocking note.
+    wakingTimerRef.current = setTimeout(() => setIsWakingServer(true), 4000);
     try {
       const result = await importTimeStudy(files, useRowOrder);
       dispatch({ type: "IMPORT_TIME_STUDY", layout: result.layout });
@@ -108,11 +118,25 @@ export function TimeStudyImporter() {
     } catch (err: unknown) {
       // Surface the specific message and preserve canvas state by NOT
       // dispatching any layout action. Clear any stale success report.
-      setError(extractErrorMessage(err));
+      // Network/timeout failures are most likely a cold start still waking up,
+      // so we soften the message; real 422 validation errors keep their
+      // specific detail from extractErrorMessage.
+      if (isApiError(err) && (err.isNetworkError || err.status === null)) {
+        setError(
+          "The server did not respond in time. It may be waking up from idle, please try again in a moment."
+        );
+      } else {
+        setError(extractErrorMessage(err));
+      }
       setReport(null);
       setImportedName(null);
       setImportedCount(0);
     } finally {
+      if (wakingTimerRef.current !== null) {
+        clearTimeout(wakingTimerRef.current);
+        wakingTimerRef.current = null;
+      }
+      setIsWakingServer(false);
       setIsImporting(false);
     }
   }
@@ -305,6 +329,24 @@ export function TimeStudyImporter() {
           )}
         </div>
       </div>
+
+      {/* Cold-start hint: a small muted line shown only while an import is in
+          flight AND the request is slow enough to look like a waking backend.
+          Kept as a single compact line so it does not disturb the fixed-height
+          importer strip. */}
+      {isImporting && isWakingServer && (
+        <p
+          style={{
+            margin: "4px 0 0 0",
+            fontSize: "0.72rem",
+            lineHeight: 1.3,
+            color: "#b0c8e0",
+          }}
+          role="status"
+        >
+          Starting the server. The first import after a quiet period can take up to a minute, please wait.
+        </p>
+      )}
 
       <input
         ref={fileInputRef}

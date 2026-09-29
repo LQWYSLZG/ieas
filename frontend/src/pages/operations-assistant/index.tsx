@@ -7,16 +7,15 @@
 
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { apiRequest } from "../../lib/apiClient";
 import { asset } from "../../lib/asset";
+import { warmUpBackend } from "../../lib/warmup";
 
 export default function OperationsAssistant() {
-  // Wake-on-entry: fire a fire-and-forget health ping when the operations area
-  // is opened so the Render free-tier backend starts warming up even before the
-  // simulator is opened. Result and errors are intentionally ignored so this
-  // never blocks rendering or surfaces an error.
+  // Wake-on-entry: start warming the Render free-tier backend when the
+  // operations area is opened so it is ready before the simulator is used.
+  // Throttled and fire-and-forget, so it never blocks or breaks the UI.
   useEffect(() => {
-    apiRequest("GET", "/health").catch(() => {});
+    warmUpBackend();
   }, []);
 
   return (

@@ -3,12 +3,21 @@
  * Buttons are OUTSIDE and BELOW the cards (separate elements), same as the old app.
  */
 
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { appRegistry, getSortedRegistry, AppModuleConfig } from "../config/appRegistry";
 import { asset } from "../lib/asset";
+import { warmUpBackend } from "../lib/warmup";
 
 export function LandingPage() {
   const apps = getSortedRegistry(appRegistry);
+
+  // Wake-on-entry: start warming the Render free-tier backend as soon as the
+  // suite landing page mounts. Throttled and fire-and-forget, so it never
+  // blocks rendering.
+  useEffect(() => {
+    warmUpBackend();
+  }, []);
 
   return (
     <div className="landing-page">

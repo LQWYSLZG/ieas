@@ -5,9 +5,18 @@
  * inventory analysis, customer segmentation, and stock control.
  */
 
+import { useEffect } from "react";
 import { asset } from "../../lib/asset";
+import { warmUpBackend } from "../../lib/warmup";
 
 export default function InventoryAssistant() {
+  // Wake-on-entry: start warming the Render free-tier backend when this
+  // assistant is opened. Throttled and fire-and-forget, so it never blocks
+  // or breaks the UI.
+  useEffect(() => {
+    warmUpBackend();
+  }, []);
+
   return (
     <div
       style={{

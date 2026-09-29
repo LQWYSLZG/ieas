@@ -7,9 +7,11 @@
  * - Right: Properties (Setup) / Results (Simulate) / Recommendations (Optimize)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LayoutProvider, useLayout } from "../context/LayoutContext";
+import { isApiError } from "../../../../lib/apiClient";
+import { warmUpBackend } from "../../../../lib/warmup";
 import SimulatorCanvas from "./SimulatorCanvas";
 import { StationPalette } from "./StationPalette";
 import { PropertiesPanel } from "./PropertiesPanel";
@@ -76,6 +78,13 @@ function FactorySimulatorContent() {
   const [simulationError, setSimulationError] = useState<string | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
+  // "Server waking up" hint: when a run has not resolved within a few seconds
+  // it is likely a Render free-tier cold start, so we show a small non-blocking
+  // note near the Run button. The timeout id is kept in a ref so it can be
+  // cleared reliably in the finally block.
+  const [isWakingServer, setIsWakingServer] = useState(false);
+  const wakingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Restart flow: confirmation dialog + post-restart success toast.
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showRestartDone, setShowRestartDone] = useState(false);
@@ -116,24 +125,25 @@ function FactorySimulatorContent() {
     return () => clearTimeout(t);
   }, [showRestartDone]);
 
-  // Wake-on-entry: fire a fire-and-forget health ping when this page mounts to
-  // hide the Render free-tier cold start. We reuse the shared api client so the
-  // URL is built from the same base (VITE_API_BASE_URL, default "/api/v1").
-  // Result and errors are intentionally ignored so this never blocks or breaks
-  // the UI.
+  // Wake-on-entry: start warming the Render free-tier backend when this page
+  // mounts to hide the cold start. Throttled and fire-and-forget, so it never
+  // blocks or breaks the UI.
   useEffect(() => {
-    import("../../../../lib/apiClient")
-      .then(({ apiRequest }) => apiRequest("GET", "/health"))
-      .catch(() => {});
+    warmUpBackend();
   }, []);
 
   async function handleRunSimulation() {
     setIsSimulating(true);
     setSimulationError(null);
+    setIsWakingServer(false);
     // Clear any stale prior result and selection before a fresh run so
     // re-running after edits never shows leftover state from the last run.
     setSimulationResult(null);
     setSelectedElementId(null);
+
+    // If the request has not resolved within 4 seconds, assume the backend is
+    // waking up from idle and show a small non-blocking note.
+    wakingTimerRef.current = setTimeout(() => setIsWakingServer(true), 4000);
 
     try {
       const { apiRequest } = await import("../../../../lib/apiClient");
@@ -166,7 +176,14 @@ function FactorySimulatorContent() {
       setSimulationResult(result);
       setStage("Simulate");
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "message" in err) {
+      // Network/timeout failures are most likely a cold start still waking up,
+      // so we soften the message and invite a retry. Real 4xx/validation errors
+      // keep their specific detail below.
+      if (isApiError(err) && (err.isNetworkError || err.status === null)) {
+        setSimulationError(
+          "The server did not respond in time. It may be waking up from idle, please try again in a moment."
+        );
+      } else if (err && typeof err === "object" && "message" in err) {
         const apiErr = err as { message: string; body?: unknown };
         let detail = "Simulation failed.";
         if (apiErr.body && typeof apiErr.body === "object") {
@@ -189,6 +206,11 @@ function FactorySimulatorContent() {
         setSimulationError("Simulation failed. Ensure Source → Station → Sink are connected.");
       }
     } finally {
+      if (wakingTimerRef.current !== null) {
+        clearTimeout(wakingTimerRef.current);
+        wakingTimerRef.current = null;
+      }
+      setIsWakingServer(false);
       setIsSimulating(false);
     }
   }
@@ -320,6 +342,11 @@ function FactorySimulatorContent() {
           >
             {isSimulating ? "Simulating..." : "▶ Run Simulation"}
           </button>
+          {isWakingServer && (
+            <p style={{ color: "#b0c8e0", fontSize: "0.75rem", margin: "0 0 10px 0", lineHeight: 1.3 }}>
+              Starting the simulation server. The first run after a quiet period can take up to a minute, please wait.
+            </p>
+          )}
           {simulationError && (
             <p style={{ color: "#ff6b7a", fontSize: "0.75rem", margin: "0 0 10px 0", lineHeight: 1.3 }}>{simulationError}</p>
           )}
