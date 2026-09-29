@@ -1,0 +1,401 @@
+/**
+ * Factory Floor Simulator — Page styles
+ * Uses app2 (Manufacturing Operations Assistant) blue theme:
+ * Primary: #2d5a8e, Dark: #1a2a3a, Accent: #d4a017
+ */
+
+.factory-simulator-page {
+  padding: 0;
+  color: var(--color-text-primary, #fff);
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.factory-simulator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.factory-simulator-back-link {
+  color: #b0c8e0;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color 0.15s;
+}
+.factory-simulator-back-link:hover {
+  color: #d4a017;
+}
+
+.factory-simulator-title {
+  color: #d4a017;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Top row: Time Study import (left) + 3-step tabs (right) on the same horizon.
+   The tabs block is fixed to the right panel's width (320px) so their right
+   edges align with the panel below; the import slot fills the rest. */
+.factory-simulator-top-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+  /* Fixed height so the tabs keep the same size across all stages, even when
+     the import panel (only shown in Setup) is not present. Matches the import
+     bar's rendered height. */
+  min-height: 66px;
+}
+
+.factory-simulator-import-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* When the importer sits inline in the top row, drop its own bottom margin so
+   both items align on the same baseline. */
+.factory-simulator-import-slot .ts-importer {
+  margin-bottom: 0;
+  height: 100%;
+}
+
+@media (max-width: 900px) {
+  .factory-simulator-top-row {
+    flex-direction: column;
+  }
+  .factory-simulator-stages {
+    width: 100%;
+  }
+}
+
+/* Restart button — sits between the import panel and the stage tabs, matching
+   the row's dark theme + gold top accent and stretched to the row height. */
+.factory-simulator-restart {
+  flex: 0 0 auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 14px;
+  background: rgba(45, 90, 142, 0.2);
+  color: #b0c8e0;
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+  font-size: 1.1rem;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.factory-simulator-restart:hover {
+  background: rgba(212, 160, 23, 0.14);
+  color: #fff;
+  border-color: #d4a017;
+}
+.factory-simulator-restart-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Stage tabs — fixed to the right-side panel width (320px) below it, and
+   stretched to the top row's height so the bar stays the same size in every
+   stage (Setup / Simulate / Optimize). */
+.factory-simulator-stages {
+  margin-bottom: 0;
+  flex: 0 0 320px;
+  width: 320px;
+  display: flex;
+  align-items: stretch;
+}
+.factory-simulator-stages .factory-simulator-stage-list {
+  align-items: stretch;
+}
+
+.factory-simulator-stage-list {
+  display: flex;
+  gap: 0.25rem;
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  background: #1a2a3a;
+  border-radius: 8px;
+  border: 1px solid #2d5a8e;
+  /* Gold top accent to match the Time Study import panel on the same row. */
+  border-top: 3px solid #d4a017;
+  /* Fill the fixed 320px stages block so the tabs span the full width and the
+     right edge lines up with the panel below. */
+  width: 100%;
+}
+/* Each step shares the width equally. */
+.factory-simulator-stage-list > li {
+  flex: 1 1 0;
+  display: flex;
+}
+
+.factory-simulator-stage-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.5rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b0c8e0;
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  width: 100%;
+}
+.factory-simulator-stage-tab:hover {
+  background: rgba(45, 90, 142, 0.3);
+  color: #fff;
+}
+.factory-simulator-stage-tab--active {
+  background: #2d5a8e;
+  color: #d4a017;
+  font-weight: 600;
+}
+
+.factory-simulator-stage-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.factory-simulator-stage-tab--active .factory-simulator-stage-number {
+  background: #d4a017;
+  color: #1a2a3a;
+}
+
+/* Content layouts */
+.factory-simulator-content {
+  flex: 1;
+  min-height: 0;
+}
+
+.factory-simulator-setup-layout {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* Shared shorter height for all three columns so the page doesn't grow tall.
+   Each column scrolls internally instead. */
+.factory-simulator-palette,
+.factory-simulator-canvas-area,
+.factory-simulator-properties {
+  height: 780px;
+}
+
+.factory-simulator-palette {
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.factory-simulator-canvas-area {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Infinite pan & zoom canvas — the Stage fills this column and handles its
+     own navigation, so the container itself must not scroll. */
+  overflow: hidden;
+  position: relative;
+}
+
+.factory-simulator-properties {
+  width: 320px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.factory-simulator-simulate-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.factory-simulator-optimize-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px 280px;
+  gap: 1rem;
+  min-height: 0;
+}
+
+/* Shared panel styles */
+.factory-simulator-palette,
+.factory-simulator-properties,
+.factory-simulator-metrics,
+.factory-simulator-recommendations {
+  background: #1a2a3a;
+  border: 1px solid #2d5a8e;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.factory-simulator-palette h2,
+.factory-simulator-properties h2,
+.factory-simulator-metrics h2,
+.factory-simulator-recommendations h2 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #d4a017;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: 0.5px;
+}
+
+.factory-simulator-placeholder {
+  color: #b0c8e0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .factory-simulator-setup-layout {
+    flex-direction: column;
+  }
+  .factory-simulator-simulate-layout {
+    grid-template-columns: 1fr;
+  }
+  .factory-simulator-optimize-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Restart confirmation dialog ── */
+.factory-simulator-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 18, 28, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.factory-simulator-modal {
+  width: min(420px, 92vw);
+  background: linear-gradient(180deg, #1a2a3a 0%, #16222f 100%);
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 10px;
+  padding: 22px 24px 18px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+}
+
+.factory-simulator-modal-icon {
+  font-size: 1.8rem;
+  color: #d4a017;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.factory-simulator-modal-title {
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.factory-simulator-modal-text {
+  color: #b0c8e0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0 0 18px 0;
+}
+
+.factory-simulator-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.factory-simulator-modal-btn {
+  flex: 1 1 0;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.factory-simulator-modal-btn--ghost {
+  background: transparent;
+  color: #b0c8e0;
+  border: 1px solid #2d5a8e;
+}
+.factory-simulator-modal-btn--ghost:hover {
+  background: rgba(45, 90, 142, 0.25);
+  color: #fff;
+}
+.factory-simulator-modal-btn--danger {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #c0392b;
+}
+.factory-simulator-modal-btn--danger:hover {
+  background: #d64535;
+  border-color: #d64535;
+}
+
+/* ── Post-restart success toast ── */
+.factory-simulator-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  background: #16222f;
+  border: 1px solid rgba(40, 167, 69, 0.5);
+  border-left: 4px solid #28a745;
+  border-radius: 8px;
+  color: #d5e6da;
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+  font-size: 0.84rem;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  animation: fss-toast-in 0.2s ease-out;
+}
+.factory-simulator-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #28a745;
+  color: #0d1a2a;
+  font-size: 0.7rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+@keyframes fss-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

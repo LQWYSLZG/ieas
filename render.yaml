@@ -1,0 +1,25 @@
+# Render blueprint for the IE Suite backend (FastAPI + SimPy).
+#
+# This defines the API service only. The frontend is hosted separately on
+# GitHub Pages, so this service serves the API and does not need to build the
+# React bundle. Render sets the PORT environment variable; uvicorn binds to it.
+#
+# CORS_ALLOW_ORIGINS authorizes the GitHub Pages frontend origin to call this
+# API in the browser. Update it if the frontend origin changes.
+
+services:
+  - type: web
+    name: ieas-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENV
+        value: production
+      - key: CORS_ALLOW_ORIGINS
+        value: https://LQWYSLZG.github.io
+      - key: PYTHON_VERSION
+        value: "3.11"

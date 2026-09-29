@@ -1,0 +1,63 @@
+# ===========================================================
+# Python (backend)
+# ===========================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.hypothesis/
+
+# ===========================================================
+# Node / frontend
+# ============================================================
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Frontend build output that the backend serves (regenerated on build)
+backend/static/
+
+# ===========================================================
+# Environment / secrets
+# ============================================================
+# Ignore secret env files, but allow the non-secret build-time env files.
+# .env.production holds only the public backend API URL (not a secret) and MUST
+# be committed so the GitHub Actions build can embed the correct API URL.
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.production
+*.pem
+*.key
+
+# ===========================================================
+# OS / editor
+# ============================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+
+# ============================================================
+# Logs / temp / scratch
+# ============================================================
+*.log
+tmp/
+temp/
+_gen_*.py
+_verify_*.py
+_runcheck*.py
+_httpcheck*.py
+_probe*.py
+_final*.py
+_poscheck*.py

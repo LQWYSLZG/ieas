@@ -1,0 +1,457 @@
+/**
+ * TimeStudyImporter: themed upload panel.
+ * Steel-blue + gold theme to match the Operations Assistant (app2):
+ *   Primary #2d5a8e · Dark #1a2a3a · Accent #d4a017 · Text #b0c8e0
+ */
+
+/* The panel is now just a slim bar: the dropzone IS the panel. */
+.ts-importer {
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+  margin-bottom: 0.75rem;
+  /* Positioning context for the floating report/error overlays so they anchor
+     to the bar and can visually overflow the fixed-height top row. */
+  position: relative;
+}
+
+.ts-importer__bar {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 100%;
+}
+
+.ts-importer__dropzone-text {
+  text-align: left;
+  min-width: 0;
+}
+
+/* ── Format guide button + popover ── */
+.ts-importer__guide-anchor {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.ts-importer__guide-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(45, 90, 142, 0.2);
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  color: #b0c8e0;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  height: 100%;
+}
+.ts-importer__guide-toggle:hover {
+  background: rgba(212, 160, 23, 0.14);
+  color: #fff;
+  border-color: #d4a017;
+}
+.ts-importer__guide-toggle-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.ts-importer__guide-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+/* ── Column guide popover ── */
+.ts-importer__guide {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(560px, 92vw);
+  padding: 12px 14px 14px;
+  background: #16222f;
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.ts-importer__guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #d4a017;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+.ts-importer__guide-close {
+  background: transparent;
+  border: none;
+  color: #8ba3c0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.ts-importer__guide-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.ts-importer__guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+}
+.ts-importer__guide-table th {
+  text-align: left;
+  color: #d4a017;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-bottom: 1px solid #2d5a8e;
+}
+.ts-importer__guide-table td {
+  color: #c9d8ea;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(45, 90, 142, 0.2);
+  vertical-align: top;
+}
+.ts-importer__guide-table code {
+  background: #0f1a26;
+  color: #ead08a;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
+
+.ts-importer__badge {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.ts-importer__badge--req {
+  background: rgba(212, 160, 23, 0.18);
+  color: #e8b830;
+  border: 1px solid rgba(212, 160, 23, 0.4);
+}
+.ts-importer__badge--opt {
+  background: rgba(45, 90, 142, 0.25);
+  color: #8fb2d8;
+  border: 1px solid rgba(45, 90, 142, 0.5);
+}
+
+.ts-importer__guide-subhead {
+  color: #d4a017;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 12px 0 4px 0;
+}
+.ts-importer__guide-subhead:first-of-type {
+  margin-top: 0;
+}
+
+.ts-importer__guide-note {
+  color: #8ba3c0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin: 8px 0 0 0;
+}
+
+/* ── Dropzone ── */
+/* The dropzone is the whole bar: panel gradient + gold top accent + dashed
+   inner cue, laid out horizontally to stay short. */
+.ts-importer__dropzone {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, #1a2a3a 0%, #16222f 100%);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.ts-importer__dropzone:hover,
+.ts-importer__dropzone:focus-visible {
+  border-color: #d4a017;
+  box-shadow: inset 0 0 0 1px rgba(212, 160, 23, 0.35);
+  outline: none;
+}
+.ts-importer__dropzone.is-dragging {
+  border-color: #d4a017;
+  background: linear-gradient(180deg, #22354a 0%, #1a2a3a 100%);
+  box-shadow: inset 0 0 0 2px rgba(212, 160, 23, 0.4);
+}
+.ts-importer__dropzone.is-busy {
+  cursor: progress;
+}
+
+.ts-importer__dropzone-icon {
+  font-size: 1.25rem;
+  color: #d4a017;
+  line-height: 1;
+  flex-shrink: 0;
+  letter-spacing: -2px;
+}
+.ts-importer__dropzone-primary {
+  color: #dbe6f2;
+  font-size: 0.82rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ts-importer__dropzone-primary strong {
+  color: #d4a017;
+}
+.ts-importer__dropzone-secondary {
+  color: #8ba3c0;
+  font-size: 0.72rem;
+  margin: 1px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ts-importer__link {
+  color: #d4a017;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.ts-importer__file-input {
+  display: none;
+}
+
+/* ── Busy / spinner ── */
+.ts-importer__busy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dbe6f2;
+  font-size: 0.84rem;
+}
+.ts-importer__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(212, 160, 23, 0.3);
+  border-top-color: #d4a017;
+  border-radius: 50%;
+  animation: ts-spin 0.7s linear infinite;
+}
+@keyframes ts-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Error state (floating overlay below the bar) ── */
+.ts-importer__error {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  width: min(680px, 96vw);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #16222f;
+  border: 1px solid rgba(220, 53, 69, 0.55);
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color: #ffbfc6;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.ts-importer__error .ts-importer__overlay-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+}
+.ts-importer__error-icon {
+  color: #ff6b7a;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.ts-importer__error-detail {
+  color: #ffd8dc;
+}
+.ts-importer__error-note {
+  color: #d79aa1;
+  font-size: 0.72rem;
+  margin: 4px 0 0 0;
+}
+
+/* ── Success report (floating overlay below the bar) ── */
+.ts-importer__report {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  width: min(680px, 96vw);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: #16222f;
+  border: 1px solid rgba(40, 167, 69, 0.45);
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.ts-importer__report-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7ed69a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+/* Push the ✕ to the far right of the header. */
+.ts-importer__report-head .ts-importer__overlay-close {
+  margin-left: auto;
+}
+.ts-importer__report-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #28a745;
+  color: #0d1a2a;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+.ts-importer__report-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ts-importer__report-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #cfe3d6;
+}
+.ts-importer__report-kind {
+  flex-shrink: 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ts-importer__report-kind--summary {
+  background: rgba(45, 90, 142, 0.4);
+  color: #a8c8ea;
+}
+.ts-importer__report-kind--fixed {
+  background: rgba(212, 160, 23, 0.2);
+  color: #e8b830;
+}
+.ts-importer__report-kind--missing {
+  background: rgba(220, 53, 69, 0.2);
+  color: #ff8a94;
+}
+/* Sequence: the accent gold/blue that signals the auto-connected line. */
+.ts-importer__report-kind--sequence {
+  background: rgba(212, 160, 23, 0.22);
+  color: #e8b830;
+}
+/* Sheets: neutral steel tone for read/classification summary entries. */
+.ts-importer__report-kind--sheets {
+  background: rgba(120, 140, 165, 0.28);
+  color: #c3d2e2;
+}
+/* Machine: a distinct purple for machine-attribute merge entries. */
+.ts-importer__report-kind--machine {
+  background: rgba(150, 110, 200, 0.24);
+  color: #c7a9ec;
+}
+.ts-importer__report-message {
+  color: #d5e6da;
+}
+.ts-importer__report-note {
+  color: #8bbf9c;
+  font-size: 0.72rem;
+  margin: 8px 0 0 0;
+  font-style: italic;
+}
+
+/* ── Row-order opt-in toggle (inline in the bar) ──
+   Sits between the dropzone and the Format button, vertically centered, and
+   sized to fit within the fixed bar height so it never grows the strip. */
+.ts-importer__row-order {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 8px;
+  background: rgba(45, 90, 142, 0.2);
+  color: #b0c8e0;
+  font-size: 0.68rem;
+  line-height: 1.15;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.ts-importer__row-order-text {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.ts-importer__row-order-checkbox {
+  accent-color: #d4a017;
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+.ts-importer__row-order-checkbox:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ── Floating overlay chrome shared by report + error ── */
+.ts-importer__overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+}
+.ts-importer__overlay-close {
+  background: transparent;
+  border: none;
+  color: #8ba3c0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.ts-importer__overlay-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}

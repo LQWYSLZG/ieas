@@ -1,0 +1,96 @@
+/**
+ * FloorPlanUploader styles
+ */
+
+.floor-plan-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.floor-plan-uploader > label {
+  color: var(--color-gold, #d4a017);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.floor-plan-dropzone {
+  border: 2px dashed var(--color-separator, #2a3a6a);
+  border-radius: 8px;
+  padding: 20px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.floor-plan-dropzone:hover,
+.floor-plan-dropzone:focus-visible {
+  border-color: var(--color-gold, #d4a017);
+  background: rgba(212, 160, 23, 0.05);
+  outline: none;
+}
+
+.floor-plan-dropzone--active {
+  border-color: var(--color-gold, #d4a017);
+  background: rgba(212, 160, 23, 0.1);
+  border-style: solid;
+}
+
+.floor-plan-dropzone__text {
+  color: var(--color-text-primary, #fff);
+  font-size: 0.82rem;
+  margin: 0 0 4px 0;
+}
+
+.floor-plan-dropzone__formats {
+  color: var(--color-text-muted, #a8b8e8);
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.floor-plan-error {
+  color: #ff6b7a;
+  font-size: 0.78rem;
+  margin: 0;
+  padding: 6px 8px;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+}
+
+.floor-plan-loaded {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.floor-plan-loaded__name {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--color-text-primary, #fff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floor-plan-remove-btn {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  border-radius: 4px;
+  color: #ff6b7a;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.floor-plan-remove-btn:hover {
+  background: rgba(220, 53, 69, 0.35);
+}
