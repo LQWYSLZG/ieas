@@ -8,6 +8,7 @@ import {
   appRegistry,
   getSortedRegistry,
 } from "../config/appRegistry";
+import { asset } from "../lib/asset";
 
 export interface SidebarProps {
   onNavigate: () => void;
@@ -26,7 +27,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       <div className="sidebar-icon-home">
         <NavLink to="/" onClick={onNavigate}>
           <img
-            src="/icons/suite-icon.png"
+            src={asset("/icons/suite-icon.png")}
             alt="IE Suite Home"
             className="sidebar-suite-icon"
           />
@@ -48,7 +49,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
           onClick={onNavigate}
         >
           <img
-            src={module.icon}
+            src={asset(module.icon)}
             alt=""
             className="sidebar-link-icon"
           />

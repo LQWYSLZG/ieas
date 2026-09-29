@@ -24,10 +24,22 @@ const LazyFactorySimulator = lazy(
     )
 );
 
+// Build time known map of active module id to its lazy loaded component.
+// Each value uses a STATIC import() literal so Vite can bundle the module as a
+// real lazy chunk and rewrite its URL for the deployed base (e.g. "/ieas/").
+// A runtime string import (the previous @vite-ignore approach) was NOT bundled
+// or base rewritten, so the browser requested a missing path in production.
+// To add a future active module: add one line here mapping its id to the same
+// static import() pattern, then set the registry entry status to "active".
+const moduleComponents: Record<string, ReturnType<typeof lazy>> = {
+  "inventory-assistant": lazy(() => import("./pages/inventory-assistant/index")),
+  "operations-assistant": lazy(() => import("./pages/operations-assistant/index")),
+};
+
 const appRoutes: RouteObject[] = appRegistry
-  .filter((app) => app.status === "active")
+  .filter((app) => app.status === "active" && app.id in moduleComponents)
   .map((app) => {
-    const LazyComponent = lazy(() => import(/* @vite-ignore */ app.componentPath));
+    const LazyComponent = moduleComponents[app.id];
     return {
       path: app.routePath,
       element: (

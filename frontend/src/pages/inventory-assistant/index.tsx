@@ -5,6 +5,8 @@
  * inventory analysis, customer segmentation, and stock control.
  */
 
+import { asset } from "../../lib/asset";
+
 export default function InventoryAssistant() {
   return (
     <div
@@ -25,7 +27,7 @@ export default function InventoryAssistant() {
         }}
       >
         <img
-          src="/icons/inventory-assistant.png"
+          src={asset("/icons/inventory-assistant.png")}
           alt=""
           style={{
             width: "56px",

@@ -8,6 +8,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../lib/apiClient";
+import { asset } from "../../lib/asset";
 
 export default function OperationsAssistant() {
   // Wake-on-entry: fire a fire-and-forget health ping when the operations area
@@ -37,7 +38,7 @@ export default function OperationsAssistant() {
         }}
       >
         <img
-          src="/icons/operations-assistant.png"
+          src={asset("/icons/operations-assistant.png")}
           alt=""
           style={{
             width: "56px",

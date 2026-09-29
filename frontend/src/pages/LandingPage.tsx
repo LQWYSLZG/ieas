@@ -5,6 +5,7 @@
 
 import { Link } from "react-router-dom";
 import { appRegistry, getSortedRegistry, AppModuleConfig } from "../config/appRegistry";
+import { asset } from "../lib/asset";
 
 export function LandingPage() {
   const apps = getSortedRegistry(appRegistry);
@@ -16,7 +17,7 @@ export function LandingPage() {
         <div className="landing-header-row">
           <img
             className="landing-header-icon"
-            src="/icons/suite-icon.png"
+            src={asset("/icons/suite-icon.png")}
             alt="Industrial Engineering Assistant Suite icon"
           />
           <h1 className="landing-title">Industrial Engineering Assistant Suite</h1>
@@ -59,7 +60,7 @@ function ActiveCardWithButton({ app }: { app: AppModuleConfig }) {
         <h3 className="landing-card-name">
           <img
             className="landing-card-title-icon"
-            src={app.icon}
+            src={asset(app.icon)}
             alt=""
           />
           {app.displayName}
