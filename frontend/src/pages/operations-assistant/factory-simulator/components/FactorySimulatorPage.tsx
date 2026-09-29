@@ -158,6 +158,9 @@ function FactorySimulatorContent() {
               takt_time: taktTime,
             },
           },
+          // Long timeout so the first run after a Render free-tier cold start
+          // (about 50 to 60 seconds to wake) does not abort as a false network error.
+          timeout: 90_000,
         }
       );
       setSimulationResult(result);

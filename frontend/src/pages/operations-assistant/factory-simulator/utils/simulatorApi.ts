@@ -11,6 +11,12 @@ import type {
   TimeStudyImportResult,
 } from '../types';
 
+// Timeout for long-running, cold-start-prone backend calls. Must exceed the
+// Render free-tier cold-start window (about 50 to 60 seconds) so the first
+// request after the backend has been idle survives the wake-up instead of
+// aborting and reporting a false network error.
+const COLD_START_TIMEOUT_MS = 90_000;
+
 /**
  * Runs a discrete event simulation on the given layout.
  */
@@ -27,6 +33,7 @@ export async function runSimulation(
         target_throughput: config?.target_throughput ?? null,
       },
     },
+    timeout: COLD_START_TIMEOUT_MS,
   });
 }
 
@@ -39,7 +46,7 @@ export async function validateLayout(
   return apiRequest<{ valid: boolean; errors: string[] }>(
     'POST',
     '/operations-assistant/simulator/validate',
-    { body: { layout } }
+    { body: { layout }, timeout: COLD_START_TIMEOUT_MS }
   );
 }
 
@@ -74,7 +81,7 @@ export async function importTimeStudy(
   return apiRequest<TimeStudyImportResult>(
     'POST',
     '/operations-assistant/simulator/import-time-study',
-    { body: formData }
+    { body: formData, timeout: COLD_START_TIMEOUT_MS }
   );
 }
 
@@ -94,6 +101,6 @@ export async function balanceLine(
   return apiRequest<LineBalanceProposal>(
     'POST',
     '/operations-assistant/simulator/balance',
-    { body: { layout, takt_time: taktTime } }
+    { body: { layout, takt_time: taktTime }, timeout: COLD_START_TIMEOUT_MS }
   );
 }
