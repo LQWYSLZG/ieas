@@ -29,18 +29,31 @@ import type {
   TransportMetrics,
 } from "../types";
 import { HelpIcon } from "./HelpIcon";
+import {
+  effectiveTargetFor,
+  effectiveTaktFor,
+  type LineScopeView,
+} from "../charts/chartData";
+import { diagnoseStation, bottleneckReason } from "../diagnosis";
 
 export interface ResultsPanelProps {
   result: SimulationResult;
   targetThroughput: number;
   onViewRecommendations: () => void;
+  /**
+   * Whether to render the "See how to fix it" next-step button. True in the
+   * compact panel (unchanged default). The expanded view passes false, since
+   * the overlay is for viewing and exploring data, not stage navigation.
+   */
+  showFixButton?: boolean;
+  /**
+   * Whether to show the labeled time-split percentages (Working, Starved,
+   * Blocked, Machine down, Idle) as readable text under each station's split
+   * bar. Off in the compact panel (unchanged default); the expanded overlay
+   * turns it on so the split is readable without hovering the bar tooltip.
+   */
+  showTimeSplitLegend?: boolean;
 }
-
-type StationProblem = {
-  tag: string;
-  color: string;
-  explain: string;
-};
 
 /**
  * The subset of fields a single line section needs to render. Both the
@@ -73,77 +86,76 @@ const subSectionTitle = { color: "#8fb0d6", fontSize: "0.68rem", fontWeight: 600
 const sharedBadgeStyle = { fontSize: "0.6rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "rgba(93, 173, 226, 0.2)", color: "#5dade2", border: "1px solid rgba(93, 173, 226, 0.5)", marginLeft: "6px" };
 
 /**
- * Classify a station's primary problem from the time split the engine reports.
- * In plain language a shop owner can act on. Priority order matters: a station
- * that is over takt is the true constraint; otherwise starving/blocking/idle
- * point to the real cause of lost time.
+ * StationsVsTaktChart - a vertical bar chart of each station's cycle time with
+ * a horizontal takt line across. A bar above the takt line is over takt (drawn
+ * red); at or below is fine (green). Pure SVG, expanded-view only. This is the
+ * app2-style at-a-glance plot: any bar poking above the takt line is a station
+ * that cannot keep pace with demand.
  */
-function diagnoseStation(sm: StationMetrics, taktTime: number | null): StationProblem {
-  // Over takt: the station simply can't keep pace with demand, the real bottleneck.
-  if (taktTime && sm.effective_cycle_time > taktTime + 0.5) {
-    return {
-      tag: "Over takt",
-      color: "#dc3545",
-      explain: `Takes ${sm.effective_cycle_time.toFixed(0)}s per unit but only ${taktTime.toFixed(0)}s is allowed. This station sets the pace of the whole line.`,
-    };
-  }
-  if (sm.down_pct >= 10) {
-    return {
-      tag: "Machine down",
-      color: "#c0392b",
-      explain: `The machine is down ${sm.down_pct.toFixed(0)}% of the time for breakdowns or repair. Preventive maintenance or a backup machine would recover this lost time.`,
-    };
-  }
-  if (sm.blocked_pct >= 15) {
-    return {
-      tag: "Blocked",
-      color: "#e07b39",
-      explain: `Finished units can't move on ${sm.blocked_pct.toFixed(0)}% of the time. The next station or buffer is full, so fix what's downstream.`,
-    };
-  }
-  if (sm.starved_pct >= 15) {
-    return {
-      tag: "Starved",
-      color: "#ffc107",
-      explain: `Waiting for parts ${sm.starved_pct.toFixed(0)}% of the time. An upstream step can't feed it fast enough.`,
-    };
-  }
-  if (sm.overstaffed && sm.utilization < 50) {
-    return {
-      tag: "Overstaffed",
-      color: "#9b59b6",
-      explain: `Busy only ${sm.utilization.toFixed(0)}% of the time with operators assigned. Consider moving people to a busier station.`,
-    };
-  }
-  if (sm.utilization >= 85) {
-    return {
-      tag: "At capacity",
-      color: "#dc3545",
-      explain: `Running ${sm.utilization.toFixed(0)}% of the time with very little slack. Any hiccup here will slow the line.`,
-    };
-  }
-  return {
-    tag: "Healthy",
-    color: "#28a745",
-    explain: `Running ${sm.utilization.toFixed(0)}% of the time with room to spare.`,
-  };
-}
+function StationsVsTaktChart({
+  stations,
+  takt,
+}: {
+  stations: StationMetrics[];
+  takt: number | null;
+}) {
+  if (stations.length === 0) return null;
 
-/**
- * Plain explanation of WHY a station is the bottleneck, so the owner
- * understands the mark instead of just seeing it.
- */
-function bottleneckReason(sm: StationMetrics, taktTime: number | null): string {
-  if (taktTime && sm.effective_cycle_time > taktTime + 0.5) {
-    return `It is the slowest step on the line: ${sm.effective_cycle_time.toFixed(0)}s per unit against a ${taktTime.toFixed(0)}s target, so it sets the pace everything else waits on.`;
-  }
-  if (sm.down_pct >= 10) {
-    return `Machine downtime here (${sm.down_pct.toFixed(0)}% of the time) drops its real output below the other stations, making it the constraint.`;
-  }
-  if (sm.blocked_pct >= 15) {
-    return `It is busy the most but loses ${sm.blocked_pct.toFixed(0)}% of its time blocked, so it cannot pass work along fast enough.`;
-  }
-  return `It runs the highest share of the time (${sm.utilization.toFixed(0)}%), so it has the least spare capacity and limits the whole line.`;
+  // Chart geometry.
+  const width = 100; // percent-based horizontal layout via flex, so this is per-bar
+  void width;
+  const chartHeight = 150;
+  const maxCycle = Math.max(
+    takt ?? 0,
+    ...stations.map((s) => (Number.isFinite(s.effective_cycle_time) ? s.effective_cycle_time : 0))
+  );
+  // Leave 10% headroom so the tallest bar or the takt line is not flush to the top.
+  const scaleMax = maxCycle > 0 ? maxCycle * 1.1 : 1;
+  const taktY = takt != null ? chartHeight - (takt / scaleMax) * chartHeight : null;
+
+  return (
+    <div style={{ ...cardStyle, padding: "10px 12px" }}>
+      <div style={{ fontSize: "0.7rem", color: "#8ba3c0", marginBottom: "8px", fontWeight: 600 }}>
+        Stations vs takt {takt != null ? `(takt ${takt.toFixed(0)}s)` : ""}
+      </div>
+      <div style={{ position: "relative", display: "flex", alignItems: "flex-end", gap: "10px", height: `${chartHeight}px`, borderLeft: "1px solid rgba(45,90,142,0.5)", borderBottom: "1px solid rgba(45,90,142,0.5)", padding: "0 4px" }}>
+        {/* Takt threshold line across the whole plot. */}
+        {taktY != null && (
+          <div
+            title={`Takt ${takt!.toFixed(0)}s`}
+            style={{ position: "absolute", left: 0, right: 0, top: `${taktY}px`, borderTop: "2px dashed #d4a017", pointerEvents: "none" }}
+          />
+        )}
+        {stations.map((s) => {
+          const ect = Number.isFinite(s.effective_cycle_time) ? s.effective_cycle_time : 0;
+          const overTakt = takt != null && ect > takt + 0.5;
+          const h = scaleMax > 0 ? Math.max(1, (ect / scaleMax) * chartHeight) : 1;
+          return (
+            <div key={s.station_id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", minWidth: 0 }}>
+              <span style={{ fontSize: "0.6rem", color: "#b0c8e0", marginBottom: "2px" }}>{ect.toFixed(0)}s</span>
+              <div
+                title={`${s.station_name}: ${ect.toFixed(0)}s${takt != null ? ` vs takt ${takt.toFixed(0)}s` : ""}`}
+                style={{ width: "70%", height: `${h}px`, background: overTakt ? "#dc3545" : "#28a745", borderRadius: "3px 3px 0 0" }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      {/* Station name labels under each bar. */}
+      <div style={{ display: "flex", gap: "10px", padding: "4px 4px 0 4px" }}>
+        {stations.map((s) => (
+          <div key={s.station_id} style={{ flex: 1, minWidth: 0, fontSize: "0.6rem", color: "#8898c8", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={s.station_name}>
+            {s.station_name}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: "12px", marginTop: "6px", fontSize: "0.62rem", color: "#8898c8" }}>
+        <span><span style={{ color: "#28a745" }}>&#9632;</span> At or under takt</span>
+        <span><span style={{ color: "#dc3545" }}>&#9632;</span> Over takt</span>
+        <span><span style={{ color: "#d4a017" }}>- -</span> Takt line</span>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -170,6 +182,7 @@ function LineSection({
   operators,
   transport,
   defaultOpen = true,
+  showTimeSplitLegend = false,
 }: {
   scope: LineScope;
   targetThroughput: number;
@@ -177,6 +190,7 @@ function LineSection({
   operators?: OperatorMetrics[];
   transport?: TransportMetrics;
   defaultOpen?: boolean;
+  showTimeSplitLegend?: boolean;
 }) {
   const meetsTarget = scope.throughput >= targetThroughput * 0.98;
   const gapPct = scope.throughput_gap_pct ?? 0;
@@ -246,8 +260,13 @@ function LineSection({
       {/* 3. Per-station diagnosis */}
       <details open={defaultOpen}>
         <summary style={subSectionTitle}>{"\u25B8 "}Where the problems are</summary>
+        {/* Stations vs takt plot: first thing in this section when expanded,
+            so the over-takt stations are visible at a glance. Expanded view only. */}
+        {showTimeSplitLegend && (
+          <StationsVsTaktChart stations={scope.stations} takt={takt} />
+        )}
         <div style={{ ...cardStyle, padding: "8px 10px" }}>
-          {sortedByUtil.map((sm) => {
+          {sortedByUtil.map((sm, stationIndex) => {
             const diag = diagnoseStation(sm, takt);
             // Time split (should sum to ~100). Clamp for the bar widths.
             const busy = Math.max(0, Math.min(100, sm.utilization));
@@ -256,7 +275,7 @@ function LineSection({
             const down = Math.max(0, Math.min(100, sm.down_pct));
             const idle = Math.max(0, 100 - busy - starved - blocked - down);
             return (
-              <div key={sm.station_id} style={{ padding: "7px 0", borderBottom: "1px solid rgba(45,90,142,0.3)" }}>
+              <div key={sm.station_id} style={{ padding: "7px 0", borderBottom: (showTimeSplitLegend && stationIndex === sortedByUtil.length - 1) ? "none" : "1px solid rgba(45,90,142,0.3)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                   <span style={{ fontSize: "0.8rem", color: "#fff", fontWeight: sm.is_bottleneck ? 700 : 500 }}>
                     {sm.is_bottleneck && (
@@ -280,6 +299,18 @@ function LineSection({
                   {down > 0 && <div style={{ width: `${down}%`, background: "#c0392b" }} />}
                   {idle > 0 && <div style={{ width: `${idle}%`, background: "#3a4a6a" }} />}
                 </div>
+
+                {/* Labeled time-split percentages, readable without hovering the
+                    bar tooltip. Shown only in the expanded overlay. */}
+                {showTimeSplitLegend && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", margin: "0 0 5px 0", fontSize: "0.66rem", color: "#cdd9f5" }}>
+                    <span><span style={{ color: "#28a745" }}>&#9632;</span> Working {busy.toFixed(1)}%</span>
+                    <span><span style={{ color: "#ffc107" }}>&#9632;</span> Starved {starved.toFixed(1)}%</span>
+                    <span><span style={{ color: "#e07b39" }}>&#9632;</span> Blocked {blocked.toFixed(1)}%</span>
+                    <span><span style={{ color: "#c0392b" }}>&#9632;</span> Machine down {down.toFixed(1)}%</span>
+                    <span><span style={{ color: "#3a4a6a" }}>&#9632;</span> Idle {idle.toFixed(1)}%</span>
+                  </div>
+                )}
 
                 <p style={{ fontSize: "0.7rem", color: "#a8b8e8", margin: "0 0 4px 0", lineHeight: 1.35 }}>{diag.explain}</p>
 
@@ -330,14 +361,18 @@ function LineSection({
               </div>
             );
           })}
-          {/* Legend */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.64rem", color: "#8898c8", marginTop: "8px" }}>
-            <span><span style={{ color: "#28a745" }}>■</span> Working</span>
-            <span><span style={{ color: "#ffc107" }}>■</span> Starved</span>
-            <span><span style={{ color: "#e07b39" }}>■</span> Blocked</span>
-            <span><span style={{ color: "#c0392b" }}>■</span> Machine down</span>
-            <span><span style={{ color: "#3a4a6a" }}>■</span> Idle</span>
-          </div>
+          {/* Shared legend, only when per-station labels are not shown. The
+              expanded view labels each station inline, so this is redundant
+              there and is hidden. */}
+          {!showTimeSplitLegend && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.64rem", color: "#8898c8", marginTop: "8px" }}>
+              <span><span style={{ color: "#28a745" }}>■</span> Working</span>
+              <span><span style={{ color: "#ffc107" }}>■</span> Starved</span>
+              <span><span style={{ color: "#e07b39" }}>■</span> Blocked</span>
+              <span><span style={{ color: "#c0392b" }}>■</span> Machine down</span>
+              <span><span style={{ color: "#3a4a6a" }}>■</span> Idle</span>
+            </div>
+          )}
         </div>
       </details>
 
@@ -428,6 +463,7 @@ function LineSection({
                 </div>
               );
             })()}
+
           </div>
         </details>
       )}
@@ -476,19 +512,53 @@ function LineSection({
 }
 
 /**
+ * Project a PerLineResult onto the minimal LineScopeView shape the shared
+ * selectors read. effectiveTargetFor reads only target_throughput, and
+ * effectiveTaktFor reads only takt_time and line_balance.takt_time, so a line
+ * maps cleanly onto those fields. Keeping the adapter here lets the compact
+ * panel and the expanded charts judge each scope against one identical
+ * definition (Req 8.5) without changing any visible compact output.
+ */
+function lineAsScope(line: PerLineResult): LineScopeView {
+  return {
+    lineId: line.line_id,
+    lineName: line.line_name,
+    throughput: line.throughput,
+    line_balance: line.line_balance,
+    stations: line.stations,
+    buffers: line.buffers,
+    total_operators: line.total_operators ?? 0,
+    labor_utilization: line.labor_utilization ?? 0,
+    operators_needed: line.operators_needed,
+    operators_supplied: line.operators_supplied,
+    target_throughput: line.target_throughput,
+    takt_time: line.takt_time,
+    throughput_gap_pct: line.throughput_gap_pct,
+    isSingleLine: false,
+  };
+}
+
+/**
  * The effective target throughput a line is judged against: its own
- * target_throughput when set, else the panel's global target prop.
+ * target_throughput when set, else the panel's global target prop. This now
+ * delegates to the shared effectiveTargetFor selector so the compact panel and
+ * the expanded charts share one definition (Req 8.5). Behavior is identical:
+ * the shared selector returns scope.target_throughput ?? fallback, which for a
+ * line equals line.target_throughput ?? fallbackTarget.
  */
 function effectiveTarget(line: PerLineResult, fallbackTarget: number): number {
-  return line.target_throughput ?? fallbackTarget;
+  return effectiveTargetFor(lineAsScope(line), fallbackTarget);
 }
 
 /**
  * The effective takt a line is judged against: its own takt_time when set, else
- * the line's own balance takt.
+ * the line's own balance takt. This now delegates to the shared effectiveTaktFor
+ * selector so the compact panel and the expanded charts share one definition
+ * (Req 8.5). Behavior is identical: the shared selector returns
+ * scope.takt_time ?? scope.line_balance.takt_time ?? null.
  */
 function effectiveTakt(line: PerLineResult): number | null {
-  return line.takt_time ?? line.line_balance.takt_time ?? null;
+  return effectiveTaktFor(lineAsScope(line));
 }
 
 /**
@@ -606,7 +676,7 @@ function WholeFactoryRollup({ result }: { result: SimulationResult }) {
   );
 }
 
-export function ResultsPanel({ result, targetThroughput, onViewRecommendations }: ResultsPanelProps) {
+export function ResultsPanel({ result, targetThroughput, onViewRecommendations, showFixButton = true, showTimeSplitLegend = false }: ResultsPanelProps) {
   const lines = result.lines ?? [];
 
   // No-regression: when there are no per-line results OR exactly one line,
@@ -615,15 +685,15 @@ export function ResultsPanel({ result, targetThroughput, onViewRecommendations }
   // the scope, and it keeps showing operators and transport exactly as before.
   const singleLine = lines.length <= 1;
 
-  const fixButton = (
+  const fixButton = showFixButton ? (
     <button
       type="button"
       onClick={onViewRecommendations}
       style={{ marginTop: "8px", width: "100%", padding: "9px", background: "#2d5a8e", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}
     >
-      See how to fix it →
+      See Recommendations →
     </button>
-  );
+  ) : null;
 
   if (singleLine) {
     const takt = result.line_balance.takt_time ?? null;
@@ -635,6 +705,7 @@ export function ResultsPanel({ result, targetThroughput, onViewRecommendations }
           takt={takt}
           operators={result.operators}
           transport={result.transport}
+          showTimeSplitLegend={showTimeSplitLegend}
         />
         {fixButton}
       </div>
@@ -669,6 +740,7 @@ export function ResultsPanel({ result, targetThroughput, onViewRecommendations }
               targetThroughput={effectiveTarget(line, targetThroughput)}
               takt={effectiveTakt(line)}
               defaultOpen={false}
+              showTimeSplitLegend={showTimeSplitLegend}
             />
           </div>
         </details>

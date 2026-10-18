@@ -18,58 +18,16 @@ import { PropertiesPanel } from "./PropertiesPanel";
 import { ResultsPanel } from "./ResultsPanel";
 import { TimeStudyImporter } from "./TimeStudyImporter";
 import { HelpIcon } from "./HelpIcon";
-import type { SimulationResult, Recommendation } from "../types";
+import { ExpandedViewModal } from "./ExpandedViewModal";
+import { ResultsExpandedView } from "./ResultsExpandedView";
+import { RecommendationsExpandedView } from "./RecommendationsExpandedView";
+import { RecommendationsList } from "./RecommendationsList";
+import type { SimulationResult } from "../types";
 import "./FactorySimulatorPage.css";
 
 type WorkflowStage = "Setup" | "Simulate" | "Optimize";
 
 const STAGES: WorkflowStage[] = ["Setup", "Simulate", "Optimize"];
-
-// Friendly, shop-owner-readable titles for recommendation problem keys.
-const PROBLEM_LABELS: Record<string, string> = {
-  bottleneck: "Bottleneck",
-  blocking: "Blocked Flow",
-  starvation: "Starved for Parts",
-  machine_downtime: "Machine Downtime",
-  labor_constraint: "Not Enough Operators",
-  overstaffed: "Too Many Operators",
-  low_throughput: "Line Capacity",
-  wip_explosion: "Too Much WIP",
-  walking_waste: "Transport Waste",
-  line_imbalance: "Unbalanced Line",
-  defect_waste: "Scrap and Defects",
-  setup_waste: "Setup and Changeover",
-  operation_move: "Move an Operation",
-};
-
-function problemLabel(problem: string): string {
-  return PROBLEM_LABELS[problem] ?? problem.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// A single recommendation card. Extracted so the Optimize view can render both
-// the flat single-line list and the per-line grouped list with identical
-// markup, severity colors, and problem labels.
-function RecommendationCard({ rec }: { rec: Recommendation }) {
-  const sevColor = rec.severity === "high" ? "#dc3545" : rec.severity === "medium" ? "#ffc107" : "#8ba3c0";
-  const sevBg = rec.severity === "high" ? "rgba(220,53,69,0.2)" : rec.severity === "medium" ? "rgba(255,193,7,0.2)" : "rgba(139,163,192,0.2)";
-  const sevText = rec.severity === "high" ? "#ff6b7a" : rec.severity === "medium" ? "#ffc107" : "#b0c8e0";
-  return (
-    <div style={{ padding: "8px 10px", marginBottom: "6px", background: "rgba(255,255,255,0.03)", borderRadius: "6px", borderLeft: `3px solid ${sevColor}` }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px", gap: "6px" }}>
-        <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "1px 7px", borderRadius: "10px", background: sevBg, color: sevText }}>
-          {problemLabel(rec.problem)}
-        </span>
-        {rec.estimated_throughput_gain_pct > 0 && (
-          <span style={{ fontSize: "0.66rem", color: "#28a745", fontWeight: 600, whiteSpace: "nowrap" }}>
-            up to +{rec.estimated_throughput_gain_pct.toFixed(0)}%
-          </span>
-        )}
-      </div>
-      <div style={{ fontSize: "0.74rem", fontWeight: 600, color: "#fff", marginBottom: "2px" }}>{rec.element_name}</div>
-      <p style={{ fontSize: "0.72rem", color: "#a8b8e8", margin: 0, lineHeight: 1.35 }}>{rec.action}</p>
-    </div>
-  );
-}
 
 function FactorySimulatorContent() {
   const [stage, setStage] = useState<WorkflowStage>("Setup");
@@ -77,6 +35,14 @@ function FactorySimulatorContent() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+
+  // Expanded-view overlay state. null means the overlay is closed and only the
+  // compact panels render. "results" or "recommendations" names which view is
+  // expanded. This is pure client state; opening the overlay issues no backend
+  // request (Req 1.6). triggerRef records the Expand_Control element that opened
+  // the overlay so focus can be restored to it on close (Reqs 2.2, 2.3, 9.5).
+  const [expandedView, setExpandedView] = useState<null | "results" | "recommendations">(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   // "Server waking up" hint: when a run has not resolved within a few seconds
   // it is likely a Render free-tier cold start, so we show a small non-blocking
@@ -355,42 +321,109 @@ function FactorySimulatorContent() {
           )}
 
           {stage === "Simulate" && simulationResult && (
-            <ResultsPanel
-              result={simulationResult}
-              targetThroughput={targetThroughput}
-              onViewRecommendations={() => setStage("Optimize")}
-            />
+            <>
+              {/* Results header: an additive Expand_Control that opens the
+                  near full-screen Results overlay. Shown only when a
+                  simulationResult is present (Reqs 1.1, 1.7). It records the
+                  trigger element for focus restore and sets the expanded view;
+                  it issues no backend request (Req 1.6). The compact
+                  ResultsPanel body below stays unchanged (Reqs 3.1, 3.3). */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "8px" }}>
+                <h3 style={{ color: "#d4a017", margin: 0, fontSize: "0.9rem" }}>Results</h3>
+                <button
+                  type="button"
+                  aria-label="Expand results to full screen"
+                  onClick={(e) => {
+                    triggerRef.current = e.currentTarget;
+                    setExpandedView("results");
+                  }}
+                  style={{ padding: "5px 10px", background: "#1a2a3a", color: "#a8b8e8", border: "1px solid #2d5a8e", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}
+                >
+                  <span aria-hidden="true">⤢ </span>Expand
+                </button>
+              </div>
+              <p style={{ color: "#8ba3c0", fontSize: "0.72rem", fontStyle: "italic", margin: "0 0 10px 0", lineHeight: 1.3 }}>
+                Tip: Click the 'Expand' button for detailed root cause analysis.
+              </p>
+              <ResultsPanel
+                result={simulationResult}
+                targetThroughput={targetThroughput}
+                onViewRecommendations={() => setStage("Optimize")}
+              />
+            </>
           )}
 
-          {stage === "Optimize" && simulationResult && (
+          {stage === "Optimize" && simulationResult && (() => {
+            // Derive whether at least one recommendation is available, matching
+            // how the Optimize stage renders them: for a multi-line result the
+            // per-line recommendations are flattened, otherwise the top-level
+            // recommendations are used. The Expand_Control is shown only when
+            // this count is greater than zero (Reqs 1.2, 1.7, 7.6).
+            const hasRecommendations =
+              (simulationResult.lines?.length ?? 0) >= 2
+                ? simulationResult.lines!.some((line) => line.recommendations.length > 0)
+                : simulationResult.recommendations.length > 0;
+            return (
             <div>
-              <h3 style={{ color: "#d4a017", margin: "0 0 12px 0", fontSize: "0.9rem" }}>Recommendations</h3>
-              {(simulationResult.lines?.length ?? 0) >= 2 ? (
-                // Multi-line: group recommendations under each line's subheading,
-                // reading each PerLineResult.recommendations. Lines with no
-                // recommendations show a short "running efficiently" note.
-                simulationResult.lines!.map((line) => (
-                  <details key={line.line_id} style={{ marginBottom: "12px" }}>
-                    <summary style={{ color: "#d4a017", fontSize: "0.9rem", cursor: "pointer", marginTop: "14px", marginBottom: "6px", fontWeight: 600, borderBottom: "1px solid rgba(212, 160, 23, 0.3)", paddingBottom: "4px" }}>{line.line_name}</summary>
-                    {line.recommendations.length === 0 ? (
-                      <p style={{ color: "#a8b8e8", fontSize: "0.78rem", margin: 0 }}>No issues found. This line is running efficiently.</p>
-                    ) : (
-                      line.recommendations.map((rec, i) => <RecommendationCard key={i} rec={rec} />)
-                    )}
-                  </details>
-                ))
-              ) : simulationResult.recommendations.length === 0 ? (
-                <p style={{ color: "#a8b8e8", fontSize: "0.82rem" }}>No issues found. This line is running efficiently.</p>
-              ) : (
-                simulationResult.recommendations.map((rec, i) => <RecommendationCard key={i} rec={rec} />)
-              )}
-              <button type="button" onClick={() => setStage("Setup")} style={{ marginTop: "14px", width: "100%", padding: "8px", background: "#1a2a3a", color: "#a8b8e8", border: "1px solid #2d5a8e", borderRadius: "6px", cursor: "pointer", fontSize: "0.8rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 12px 0", gap: "8px" }}>
+                <h3 style={{ color: "#d4a017", margin: 0, fontSize: "0.9rem" }}>Recommendations</h3>
+                {hasRecommendations && (
+                  <button
+                    type="button"
+                    aria-label="Expand recommendations to full screen"
+                    onClick={(e) => {
+                      triggerRef.current = e.currentTarget;
+                      setExpandedView("recommendations");
+                    }}
+                    style={{ padding: "5px 10px", background: "#1a2a3a", color: "#a8b8e8", border: "1px solid #2d5a8e", borderRadius: "6px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}
+                  >
+                    <span aria-hidden="true">⤢ </span>Expand
+                  </button>
+                )}
+              </div>
+              <RecommendationsList result={simulationResult} />
+              <button type="button" onClick={() => setStage("Setup")} style={{ marginTop: "14px", width: "100%", padding: "9px", background: "#2d5a8e", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}>
                 ← Modify Layout
               </button>
             </div>
-          )}
+            );
+          })()}
         </aside>
       </div>
+
+      {/* Expanded-view overlay. Rendered only when an expanded view is active
+          and a simulationResult is present. The generic ExpandedViewModal owns
+          the overlay shell, Close_Control, Escape handling, focus trap, and
+          focus restore; it receives the Expand_Control element that opened it
+          via triggerElement so focus returns there on close (Reqs 2.2, 2.3,
+          9.5). Closing resets expandedView to null, which unmounts the overlay
+          and restores the compact panel to its prior content and interaction
+          state with no loss of user entered data (Reqs 2.4, 3.5).
+
+          The current simulationResult and targetThroughput are passed straight
+          through, so if a new run completes while the overlay is open React
+          re-renders the wrapped view from the updated Result_Data without any
+          special code path (Reqs 1.3, 1.4, 1.5, 4.6, 5.6). */}
+      {expandedView !== null && simulationResult && (
+        <ExpandedViewModal
+          isOpen={expandedView !== null}
+          title={expandedView === "results" ? "Results expanded" : "Recommendations expanded"}
+          onClose={() => setExpandedView(null)}
+          triggerElement={triggerRef.current}
+        >
+          {expandedView === "results" ? (
+            <ResultsExpandedView
+              result={simulationResult}
+              targetThroughput={targetThroughput}
+            />
+          ) : (
+            <RecommendationsExpandedView
+              result={simulationResult}
+              targetThroughput={targetThroughput}
+            />
+          )}
+        </ExpandedViewModal>
+      )}
 
       {/* Restart confirmation dialog */}
       {showRestartConfirm && (

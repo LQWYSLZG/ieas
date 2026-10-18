@@ -1,0 +1,374 @@
+/**
+ * Expanded View overlay styles for the Factory Floor Simulator.
+ *
+ * Shared by ExpandedViewModal (the generic overlay shell), ResultsExpandedView,
+ * and RecommendationsExpandedView (both built in later tasks). Uses the app2
+ * (Manufacturing Operations Assistant) blue theme to match the compact panels:
+ *   Primary: #2d5a8e, Dark: #1a2a3a, Accent (gold): #d4a017, Secondary text: #b0c8e0
+ *
+ * Project rule: no em dashes or en dashes anywhere, only ASCII hyphens.
+ *
+ * Class name contract (stable, documented names the components rely on):
+ *   .expanded-view-overlay            - fixed full-viewport backdrop behind the dialog
+ *   .expanded-view-dialog             - the dialog container, at least 90% of the viewport
+ *   .expanded-view-header             - sticky header row holding the title and close control
+ *   .expanded-view-title              - accessible dialog title text
+ *   .expanded-view-close              - the Close_Control button
+ *   .expanded-view-scroll             - the vertical scroll region for tall content
+ *   .expanded-view-content            - inner content wrapper enforcing the min content width
+ *   .expanded-view-results-grid       - Results layout (distinct column count / grouping)
+ *   .expanded-view-recommendations-grid - Recommendations layout (distinct column count / grouping)
+ *   .expanded-view-chart              - a single chart card wrapper
+ *   .expanded-view-chart-label        - a visible text label for a chart category (non-color)
+ *   .expanded-view-chart-value        - a direct numeric text value for a category (non-color)
+ *   .expanded-view-chart-swatch       - a category swatch carrying a fill pattern (non-color)
+ *   .expanded-view-chart-pattern--*   - fill-pattern modifiers for grayscale distinction
+ *   .expanded-view-chart-unavailable  - "data unavailable" / "cannot be displayed" empty state
+ *   .expanded-view-text-alternative   - the text-alternative table wrapper for a chart
+ *   .expanded-view-empty              - the no-results / no-recommendations message
+ */
+
+/* ------------------------------------------------------------------ */
+/* Overlay backdrop and dialog shell                                   */
+/* ------------------------------------------------------------------ */
+
+/* Fixed full-viewport backdrop. Sits above the page and the restart dialog
+   (which uses z-index 1000) so the expanded view is always on top. */
+.expanded-view-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2vh 2vw;
+  background: rgba(10, 18, 28, 0.6);
+  backdrop-filter: blur(2px);
+  font-family: var(--font-family, "Segoe UI", sans-serif);
+}
+
+/* The dialog occupies at least 90 percent of the viewport in both dimensions
+   (Req 1.5). It is also capped at 96vw / 96vh so the backdrop stays visible as
+   a border, and it lays out as a column: a fixed header over a scroll region. */
+.expanded-view-dialog {
+  width: 90vw;
+  min-width: 90vw;
+  height: 90vh;
+  min-height: 90vh;
+  max-width: 96vw;
+  max-height: 96vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1a2a3a 0%, #16222f 100%);
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color: var(--color-text-primary, #fff);
+}
+
+/* Sticky header keeps the title and Close_Control visible while content scrolls. */
+.expanded-view-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 14px 20px;
+  border-bottom: 1px solid #2d5a8e;
+  background: #16222f;
+}
+
+.expanded-view-title {
+  margin: 0;
+  color: #d4a017;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Close_Control button. Keyboard focusable with a clear focus ring (Req 2.1, 9.6). */
+.expanded-view-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(45, 90, 142, 0.2);
+  color: #b0c8e0;
+  border: 1px solid #2d5a8e;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.expanded-view-close:hover {
+  background: rgba(212, 160, 23, 0.14);
+  color: #fff;
+  border-color: #d4a017;
+}
+.expanded-view-close:focus-visible {
+  outline: 2px solid #d4a017;
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll region and content width                                     */
+/* ------------------------------------------------------------------ */
+
+/* Vertical scroll region for content taller than the dialog (Req 4.4). The
+   dialog body scrolls here so the user can reach the topmost and bottommost
+   items while the header stays fixed. */
+.expanded-view-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 20px;
+}
+
+/* Min content width rule (Req 4.2): content area is at least 900px, or at least
+   90 percent of the viewport width when the viewport is narrower than 1000px.
+   The default is the 900px floor; the media query below handles narrow viewports. */
+.expanded-view-content {
+  min-width: 900px;
+  margin: 0 auto;
+}
+
+/* Narrow viewports (under 1000px): fall back to at least 90 percent of the
+   viewport width instead of the fixed 900px floor, so the content still fits. */
+@media (max-width: 999px) {
+  .expanded-view-content {
+    min-width: 90vw;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Distinct Results vs Recommendations layouts (Req 4.5)               */
+/* ------------------------------------------------------------------ */
+
+/* Results layout: a two-column grid of chart cards. This deliberately differs
+   from the Recommendations layout in column count so the two views are
+   visually distinct (Req 4.5). */
+.expanded-view-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* Recommendations layout: a single stacked column of ranked items, a different
+   grouping and column count from the Results two-column grid (Req 4.5). */
+.expanded-view-recommendations-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chart cards                                                         */
+/* ------------------------------------------------------------------ */
+
+.expanded-view-chart {
+  background: #1a2a3a;
+  border: 1px solid #2d5a8e;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.expanded-view-chart h3 {
+  margin: 0 0 0.75rem 0;
+  color: #d4a017;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Non-color chart styling helpers (Req 9.2)                           */
+/* Each category is identifiable in grayscale by a visible text label,  */
+/* a direct numeric text value, and a distinct fill pattern.            */
+/* ------------------------------------------------------------------ */
+
+/* A visible text label naming a category. Always rendered, so a grayscale
+   viewer can read the category name directly (Req 9.2). */
+.expanded-view-chart-label {
+  color: #e6eef7;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* A direct numeric text value paired with its category label (Req 9.2, 9.7). */
+.expanded-view-chart-value {
+  color: #b0c8e0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* A small swatch that carries a fill pattern (not color alone) so categories
+   stay distinguishable in grayscale (Req 9.2). The pattern modifiers below
+   supply the actual texture; the base keeps a neutral fill and a border. */
+.expanded-view-chart-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #b0c8e0;
+  border-radius: 2px;
+  background-color: #2d5a8e;
+  vertical-align: middle;
+}
+
+/* Fill-pattern modifiers. These use CSS gradients to draw repeating textures
+   (solid, diagonal stripes, dots, horizontal lines, cross-hatch) so that each
+   chart category is distinguishable without relying on color (Req 9.2). The
+   same modifier classes apply to SVG-bar fills via their class names too. */
+.expanded-view-chart-pattern--solid {
+  background-image: none;
+}
+.expanded-view-chart-pattern--diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.85) 0,
+    rgba(255, 255, 255, 0.85) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+}
+.expanded-view-chart-pattern--dots {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.85) 1px,
+    transparent 1.6px
+  );
+  background-size: 5px 5px;
+}
+.expanded-view-chart-pattern--horizontal {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.85) 0,
+    rgba(255, 255, 255, 0.85) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+}
+.expanded-view-chart-pattern--grid {
+  background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.7) 0,
+      rgba(255, 255, 255, 0.7) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.7) 0,
+      rgba(255, 255, 255, 0.7) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+}
+
+/* A labeled legend row: swatch, category label, numeric value on one line. */
+.expanded-view-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+.expanded-view-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Empty / unavailable states                                          */
+/* ------------------------------------------------------------------ */
+
+/* A single chart's "data unavailable" or "cannot be displayed" state (Req 5.5,
+   5.7). One failing chart must not break the others, so this stays contained
+   inside its own card. */
+.expanded-view-chart-unavailable {
+  color: #b0c8e0;
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.5;
+  padding: 12px;
+  border: 1px dashed #2d5a8e;
+  border-radius: 6px;
+  background: rgba(45, 90, 142, 0.12);
+}
+
+/* The view-level no-results / no-recommendations message (Req 4.7, 7.6). */
+.expanded-view-empty {
+  color: #b0c8e0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chart text alternative (Req 9.1, 9.7)                               */
+/* A readable table that conveys the same series names, category labels */
+/* and numeric values as the chart.                                    */
+/* ------------------------------------------------------------------ */
+
+.expanded-view-text-alternative {
+  margin-top: 12px;
+}
+.expanded-view-text-alternative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.expanded-view-text-alternative caption {
+  text-align: left;
+  color: #d4a017;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.expanded-view-text-alternative th,
+.expanded-view-text-alternative td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(45, 90, 142, 0.5);
+  color: #e6eef7;
+}
+.expanded-view-text-alternative td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #b0c8e0;
+}
+
+/* A visually hidden helper for text alternatives that should be available to
+   assistive technology without taking layout space. Kept here so components
+   can opt a given text alternative into screen-reader-only presentation. */
+.expanded-view-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive: keep the dialog usable on small viewports               */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1024px) {
+  /* Collapse the Results two-column grid to a single column so cards are not
+     squeezed below the min content width on smaller screens. */
+  .expanded-view-results-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
