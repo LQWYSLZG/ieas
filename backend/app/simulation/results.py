@@ -541,7 +541,7 @@ def assemble_per_line_results(
             for sm in line_stations:
                 sid = sm.station_id
                 if not sm.is_shared:
-                    line_wip_stations += sm.avg_queue_length
+                    line_wip_stations += sm.avg_occupancy
                     continue
                 raw = station_line_raw.get(sid) if station_line_raw else None
                 served = served_lines_by_station.get(sid, [line])
@@ -552,9 +552,9 @@ def assemble_per_line_results(
                         frac = processed.get(line.line_id, 0) / total_proc
                     else:
                         frac = (1.0 / len(served)) if served else 0.0
-                    line_wip_stations += sm.avg_queue_length * frac
+                    line_wip_stations += sm.avg_occupancy * frac
                 else:
-                    line_wip_stations += sm.avg_queue_length
+                    line_wip_stations += sm.avg_occupancy
             line_wip = round(
                 line_wip_stations + sum(bm.avg_level for bm in line_buffers),
                 1,

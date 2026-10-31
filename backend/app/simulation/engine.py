@@ -208,6 +208,11 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
             self.max_queue = 0
             self._last_queue_time = 0.0
             self._last_queue_len = 0
+            # Occupancy integral for WIP: counts units IN SERVICE plus queued
+            # (resource.count + len(resource.queue)), so a smoothly flowing line
+            # with no backlog still reports its in-service units as real WIP.
+            self.occupancy_time_integral = 0.0
+            self._last_occupancy = 0
             self.scrapped = 0
             self.breakdown_time = 0.0
             self.operator_wait_time = 0.0
@@ -255,8 +260,13 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
         def update_queue(self, current_time: float, resource: simpy.Resource):
             dt = current_time - self._last_queue_time
             self.queue_time_integral += self._last_queue_len * dt
+            # Accumulate occupancy (in service + queued) over the same interval,
+            # using the occupancy level as of the last update (left-continuous,
+            # matching how the queue integral is accumulated).
+            self.occupancy_time_integral += self._last_occupancy * dt
             self._last_queue_time = current_time
             self._last_queue_len = len(resource.queue)
+            self._last_occupancy = resource.count + len(resource.queue)
             self.max_queue = max(self.max_queue, self._last_queue_len)
 
     class BufferTracker:
@@ -964,6 +974,9 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
     # aggregate buckets used. Recomputing in the tail would be deterministic and
     # identical, but capturing here keeps it exact and self-documenting.
     station_max_capacity: dict[str, float] = {}
+    # Average occupancy (in service + queued) per station, summed into the
+    # measured line WIP so in-service units are counted.
+    station_avg_occupancy: dict[str, float] = {}
 
     # Line-level supply/demand, used to derive the per-station Overstaffed_Signal
     # consistently with the pool/line signal computed below.
@@ -978,6 +991,11 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
         max_capacity = effective_duration * station.num_machines
         station_max_capacity[station.id] = max_capacity
         avg_queue = tracker.queue_time_integral / effective_duration if effective_duration > 0 else 0.0
+        # Average occupancy (in service + queued) over the window, the real WIP
+        # held AT this station. Used for the measured line WIP so a smoothly
+        # flowing station still contributes its in-service unit(s).
+        avg_occupancy = tracker.occupancy_time_integral / effective_duration if effective_duration > 0 else 0.0
+        station_avg_occupancy[station.id] = avg_occupancy
         effective_ct = station.effective_cycle_time
         avg_ct = tracker.total_cycle_time / tracker.units_processed if tracker.units_processed > 0 else effective_ct
 
@@ -1113,6 +1131,7 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
             setup_impact=setup_impact,
             utilization=round(utilization, 1),
             avg_queue_length=round(avg_queue, 1),
+            avg_occupancy=round(avg_occupancy, 1),
             max_queue_length=tracker.max_queue,
             throughput=tracker.units_processed,
             avg_cycle_time=round(avg_ct, 1),
@@ -1228,7 +1247,10 @@ def run_simulation(layout: Layout, config: SimulationConfig) -> SimulationResult
     hours = effective_duration / 3600.0
     throughput = completed_units[0] / hours if hours > 0 else 0.0
     avg_lead_time = sum(lead_times) / len(lead_times) if lead_times else 0.0
-    wip_total = sum(bm.avg_level for bm in buffer_metrics_list) + sum(sm.avg_queue_length for sm in station_metrics_list)
+    # Measured WIP: units held in buffers plus units AT each station (in service
+    # plus queued). Counting in-service units is what keeps a producing line
+    # from falsely reporting 0 WIP when no backlog forms.
+    wip_total = sum(bm.avg_level for bm in buffer_metrics_list) + sum(sm.avg_occupancy for sm in station_metrics_list)
 
     # Value-Added Ratio (Process Cycle Efficiency), clamped to [0, 100].
     completed = completed_units[0]

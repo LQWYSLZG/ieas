@@ -267,6 +267,8 @@ class StationMetrics(BaseModel):
     utilization: float = Field(ge=0, le=100, description="% time busy")
     avg_queue_length: float = Field(ge=0)
     max_queue_length: float = Field(ge=0)
+    avg_occupancy: float = Field(default=0.0, ge=0,
+        description="Average units held at this station over the window, in service plus queued. The real WIP at the station; counts the in-service unit so a flowing station is not undercounted.")
     throughput: float = Field(ge=0, description="Units processed at this station")
     avg_cycle_time: float = Field(ge=0, description="Actual avg cycle time including variability")
     effective_cycle_time: float = Field(ge=0, default=0, description="Sum of operation cycle times (or flat fallback)")

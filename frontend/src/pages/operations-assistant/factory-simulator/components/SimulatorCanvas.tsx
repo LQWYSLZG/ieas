@@ -535,6 +535,16 @@ export default function SimulatorCanvas({
         x={element.x}
         y={element.y}
         draggable={!isSimulating}
+        onDragStart={(e: Konva.KonvaEventObject<DragEvent>) => {
+          // Only a LEFT-button drag moves an element. A middle-button press
+          // is reserved for panning the canvas, so cancel the element drag and
+          // let it bubble to the Stage pan. (Konva starts a drag on any
+          // button, so without this guard middle-drag would move the element.)
+          const evt = e.evt as unknown as { button?: number };
+          if (evt.button !== undefined && evt.button !== 0) {
+            e.target.stopDrag();
+          }
+        }}
         onClick={(e) => {
           // Only handle left-click for selection
           if (e.evt.button === 0) {

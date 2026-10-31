@@ -300,6 +300,32 @@ function LineSection({
                   {idle > 0 && <div style={{ width: `${idle}%`, background: "#3a4a6a" }} />}
                 </div>
 
+                {/* Utilization figures. Actual = share of available time the
+                    station was actually processing (what happened). Takt-based
+                    (implied) = effective cycle time as a percent of takt (what
+                    demand requires); over 100% means it cannot keep pace with
+                    demand even in theory, a true capacity constraint. */}
+                {(() => {
+                  const taktUtil = takt != null && takt > 0 ? (sm.effective_cycle_time / takt) * 100 : null;
+                  const overCapacity = taktUtil != null && taktUtil > 100;
+                  return (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", margin: "0 0 4px 0", fontSize: "0.68rem" }}>
+                      <span style={{ color: "#b0c8e0" }}>
+                        Utilization (actual):{" "}
+                        <span style={{ color: "#fff", fontWeight: 600 }}>{busy.toFixed(0)}%</span>
+                        <HelpIcon text="Share of its available time the station actually spent processing. Lowered by starving or blocking, so a capable station can read low when neighbours hold it up." />
+                      </span>
+                      <span style={{ color: "#b0c8e0" }}>
+                        Utilization (vs takt):{" "}
+                        <span style={{ color: taktUtil == null ? "#8898c8" : overCapacity ? "#ff6b7a" : "#28a745", fontWeight: 600 }}>
+                          {taktUtil == null ? "-" : `${taktUtil.toFixed(0)}%`}
+                        </span>
+                        <HelpIcon text="Effective cycle time as a percent of takt, the capacity demand requires. Over 100% means the station cannot keep pace with demand even in theory and is a true capacity constraint, independent of flow losses." />
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 {/* Labeled time-split percentages, readable without hovering the
                     bar tooltip. Shown only in the expanded overlay. */}
                 {showTimeSplitLegend && (
@@ -477,8 +503,12 @@ function LineSection({
             <span style={valueStyle}>{scope.avg_lead_time}s</span>
           </div>
           <div style={metricRow}>
-            <span style={labelStyle}>Work In Progress <HelpIcon text="Average number of units sitting in the line at any time. Lower is leaner." /></span>
+            <span style={labelStyle}>Work In Progress (measured) <HelpIcon text="Average number of units actually observed in the line at any time, in service plus queued plus held in buffers. Lower is leaner." /></span>
             <span style={valueStyle}>{scope.wip_total} units</span>
+          </div>
+          <div style={metricRow}>
+            <span style={labelStyle}>Work In Progress (Little's Law) <HelpIcon text="WIP implied by Little's Law = throughput times lead time. It is the average the line must hold given how fast it produces and how long each unit takes to flow through. It should closely match the measured WIP in steady state; a large gap signals inventory building up or a line not yet at steady state." /></span>
+            <span style={valueStyle}>{((scope.throughput / 3600) * scope.avg_lead_time).toFixed(1)} units</span>
           </div>
           <div style={metricRow}>
             <span style={labelStyle}>Value-Added Ratio <HelpIcon text="Share of lead time spent actually processing vs waiting/moving. Higher = less waste." /></span>
@@ -648,8 +678,12 @@ function WholeFactoryRollup({ result }: { result: SimulationResult }) {
           <span style={valueStyle}>{result.avg_lead_time}s</span>
         </div>
         <div style={metricRow}>
-          <span style={labelStyle}>Work In Progress <HelpIcon text="Average units sitting across the whole factory at any time." /></span>
+          <span style={labelStyle}>Work In Progress (measured) <HelpIcon text="Average units actually observed across the whole factory at any time, in service plus queued plus held in buffers." /></span>
           <span style={valueStyle}>{result.wip_total} units</span>
+        </div>
+        <div style={metricRow}>
+          <span style={labelStyle}>Work In Progress (Little's Law) <HelpIcon text="WIP implied by Little's Law = throughput times lead time. Should closely match the measured WIP in steady state; a large gap signals inventory building up or a line not yet at steady state." /></span>
+          <span style={valueStyle}>{((result.throughput / 3600) * result.avg_lead_time).toFixed(1)} units</span>
         </div>
         <div style={metricRow}>
           <span style={labelStyle}>Value-Added Ratio <HelpIcon text="Share of lead time spent processing vs waiting/moving, blended." /></span>

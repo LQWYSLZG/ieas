@@ -309,7 +309,7 @@ function FactorySimulatorContent() {
             {isSimulating ? "Simulating..." : "▶ Run Simulation"}
           </button>
           {isWakingServer && (
-            <p style={{ color: "#b0c8e0", fontSize: "0.75rem", margin: "0 0 10px 0", lineHeight: 1.3 }}>
+            <p style={{ color: "#ff6b7a", fontSize: "0.75rem", margin: "0 0 10px 0", lineHeight: 1.3 }}>
               Starting the simulation server. The first run after a quiet period can take up to a minute, please wait.
             </p>
           )}
