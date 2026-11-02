@@ -494,8 +494,6 @@ export function PropertiesPanel({ selectedElementId, autoArrivalRate }: Properti
                 <SimpleField label="Operators" fieldKey="operators_required" type="number" helpText="Number of workers needed to run this station (0 = fully automated by machine). Or assign operators per operation below." min={0} value={fv("operators_required")} onChange={handleChange} onSave={handleSave} />
               </>
             )}
-            <SimpleField label="Parallel Capacity" fieldKey="num_machines" type="number" helpText="How many units can be worked on at the same time (1 = one at a time)" min={1} value={fv("num_machines")} onChange={handleChange} onSave={handleSave} />
-
             {/* Machine settings shown as normal fields (not hidden in Advanced)
                 so it's clear the simulation supports machines. Persists
                 has_machine: a station does work only if it has a machine OR at
@@ -518,6 +516,16 @@ export function PropertiesPanel({ selectedElementId, autoArrivalRate }: Properti
                 <option value="no">No (operators do the work)</option>
               </select>
             </div>
+
+            {/* The num_machines count, labeled for the station type: when a
+                machine does the work it is the Number of Machines (parallel
+                machines); when operators do the work it is how many people can
+                work in parallel. Same underlying field either way. */}
+            {formValues.has_machine === "no" ? (
+              <SimpleField label="Parallel Operators (units at once)" fieldKey="num_machines" type="number" helpText="How many units can be worked on at the same time by people (1 = one at a time)." min={1} value={fv("num_machines")} onChange={handleChange} onSave={handleSave} />
+            ) : (
+              <SimpleField label="Number of Machines" fieldKey="num_machines" type="number" helpText="How many parallel machines this station runs. More machines process more units at the same time." min={1} value={fv("num_machines")} onChange={handleChange} onSave={handleSave} />
+            )}
 
             {formValues.has_machine !== "no" && (
               <PresetField

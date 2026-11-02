@@ -1184,27 +1184,19 @@ def _sheets_report(
     sheets: list[LabeledSheet],
     classifications: list[SheetClassification],
 ) -> list[ImportReportEntry]:
-    """Build the two always-present "Sheets" entries (Requirements 18.1, 18.2)."""
+    """Build the always-present files/sheets summary entry (Requirement 18.1).
+
+    The per-sheet classification listing (Requirement 18.2) was removed from the
+    user-facing report; ``classifications`` is retained in the signature so the
+    caller is unchanged, but it no longer contributes an entry.
+    """
     n_files = len({name for name, _ in normalized})
     n_sheets = len(sheets)
 
-    _TYPE_LABEL = {
-        "Time_Study": "Time study",
-        "Machine": "Machine",
-        "Ignored": "ignored",
-    }
-    listing = ", ".join(
-        f"{c.file_name}:{c.sheet_name} → {_TYPE_LABEL.get(c.sheet_type, c.sheet_type)}"
-        for c in classifications
-    )
     return [
         ImportReportEntry(
             kind="Sheets",
             message=f"Read {n_files} file(s), {n_sheets} sheet(s).",
-        ),
-        ImportReportEntry(
-            kind="Sheets",
-            message=f"Sheets: {listing}." if listing else "Sheets: (none).",
         ),
     ]
 

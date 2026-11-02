@@ -1,0 +1,104 @@
+/*
+ * ComparisonView styles.
+ *
+ * The component renders three value columns (Current, After, Change) for the
+ * overall throughput and for each station's utilization and queue length. It
+ * previously had no stylesheet, so the spans rendered as unstyled wrapping
+ * text with no columns or headers. These rules lay each row out as a four-part
+ * grid (label + current + after + change) with aligned, right-justified numbers
+ * and a header row, so the before and after values are readable at a glance.
+ *
+ * Project rule: no em dashes or en dashes anywhere, only ASCII hyphens.
+ */
+
+.comparison-view {
+  font-size: 0.84rem;
+  color: #dce7f5;
+}
+
+.comparison-view h3 {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #b0c8e0;
+}
+
+.comparison-view h4 {
+  margin: 16px 0 6px 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #8fb0d6;
+}
+
+/* The shared four-column grid used by the header row and every data row:
+   a flexible label column, then three fixed numeric columns. */
+.comparison-throughput,
+.comparison-station-row,
+.comparison-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 96px 88px;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 8px;
+}
+
+/* The header row that names the three value columns. */
+.comparison-head {
+  color: #8fb0d6;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid rgba(45, 90, 142, 0.5);
+}
+.comparison-head-metric {
+  text-align: left;
+}
+.comparison-head-num {
+  text-align: right;
+}
+
+/* Zebra striping for data rows so long lists stay readable. */
+.comparison-station-row:nth-child(odd) {
+  background: rgba(45, 90, 142, 0.08);
+}
+
+/* The throughput summary row sits a touch bolder than the station rows. */
+.comparison-throughput {
+  background: rgba(212, 160, 23, 0.1);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.comparison-label,
+.comparison-station-name {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comparison-value-a,
+.comparison-value-b,
+.comparison-delta {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison-value-a {
+  color: #b0c8e0;
+}
+.comparison-value-b {
+  color: #e6eef7;
+  font-weight: 600;
+}
+.comparison-delta {
+  font-weight: 700;
+}
+
+.comparison-station-list,
+.comparison-queue-list {
+  display: flex;
+  flex-direction: column;
+}

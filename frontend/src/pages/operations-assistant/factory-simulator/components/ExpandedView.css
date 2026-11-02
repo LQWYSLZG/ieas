@@ -372,3 +372,157 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Auto-Optimize expanded view (Optimize step overlay)                 */
+/* A wide, two-column workflow: setup on the left, review on the right. */
+/* ------------------------------------------------------------------ */
+
+.ao-expanded {
+  width: 100%;
+}
+
+.ao-expanded__recommendations {
+  margin-bottom: 4px;
+}
+
+.ao-expanded__divider {
+  border: none;
+  border-top: 1px solid rgba(45, 90, 142, 0.5);
+  margin: 20px 0;
+}
+
+/* The workflow grid. Default (no proposal yet): a single full-width column so
+   the setup is not stranded in a narrow strip. */
+.ao-expanded__workflow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.ao-expanded__setup {
+  min-width: 0;
+}
+
+/* The setup card gives the controls a clear surface against the overlay
+   gradient so the workflow does not look like loose text stacked on the left. */
+.ao-expanded__setup {
+  background: rgba(26, 42, 58, 0.55);
+  border: 1px solid #2d5a8e;
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+/* The review surface sits below the Run button as its own card so the proposed
+   configuration reads as a distinct, self-contained step. */
+.ao-expanded__review {
+  margin-top: 18px;
+  padding: 16px 18px;
+  background: rgba(16, 24, 36, 0.55);
+  border: 1px solid #2d5a8e;
+  border-top: 3px solid #d4a017;
+  border-radius: 10px;
+}
+
+.ao-expanded__intro {
+  color: #b0c8e0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.ao-expanded__toggle {
+  padding: 11px 20px;
+  background: #2d5a8e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.ao-expanded__toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ao-expanded__toggle:hover:not(:disabled) {
+  background: #356aa6;
+}
+
+.ao-expanded__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0 0;
+  color: #d4a017;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.ao-expanded__error {
+  color: #ff6b7a;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 14px 0 0 0;
+}
+
+/* The constraints form sits in its own padded well so its controls use the
+   column width instead of hugging the left edge. */
+.ao-expanded__form {
+  margin-top: 18px;
+}
+
+.ao-expanded__run {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: #d4a017;
+  color: #1a2a3a;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.ao-expanded__run:disabled {
+  background: #1a2a3a;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+.ao-expanded__run:hover:not(:disabled) {
+  background: #e3b428;
+}
+
+.ao-expanded__review {
+  min-width: 0;
+}
+
+/* Scale up the inner workflow typography so it reads at overlay size rather
+   than compact side-panel size. The inner components (ConstraintsForm,
+   OptimizeReviewPanel, ChangeList) use rem-based font sizes, which these
+   descendant rules enlarge. Inline pixel styles are left as-is; the container
+   width and spacing below are what remove the cramped, tiny-left-column look. */
+.ao-expanded__form .constraints-form h3 {
+  font-size: 0.95rem;
+}
+.ao-expanded__form .constraints-form label,
+.ao-expanded__form .constraints-form input,
+.ao-expanded__form .constraints-form select {
+  font-size: 0.9rem;
+}
+.ao-expanded__form .constraints-form p {
+  font-size: 0.82rem;
+}
+
+.ao-expanded__review .optimize-review-panel h3 {
+  font-size: 1.05rem;
+}
+.ao-expanded__review .change-list {
+  font-size: 0.9rem;
+}
+
+/* Give the reused ComparisonView room to spread across the review column. */
+.ao-expanded__review .comparison-view {
+  width: 100%;
+}

@@ -348,3 +348,75 @@ export type LayoutAction =
   | { type: "RENAME_LINE"; line_id: string; name: string }
   | { type: "SET_LINE_TARGET"; line_id: string; target_throughput?: number | null; takt_time?: number | null }
   | { type: "SET_SHARED_SCHEDULE"; station_id: string; schedule: "fcfs" | "round_robin" | "priority" };
+
+// ═══════════════════════════════════════════════════════════════════════
+// AUTO-OPTIMIZE
+// ═══════════════════════════════════════════════════════════════════════
+// These mirror the backend Pydantic models in routers/simulator.py and the
+// OptimizeResult dataclass in optimization/service.py exactly, so the JSON
+// crosses the boundary with no remapping.
+
+/** One precedence edge: before must come no later than after. */
+export interface PrecedenceRule {
+  before: string;   // operation key that must come no later than...
+  after: string;    // ...this operation key
+}
+
+/** Pin one operation to one station. */
+export interface StationLock {
+  operation: string;   // operation key
+  station_id: string;  // pinned station
+}
+
+/** The user-editable constraints for an Auto-Optimize run. */
+export interface OptimizeConstraints {
+  precedence: PrecedenceRule[];                 // default empty => current order used
+  locks: StationLock[];                         // default none
+  operator_cap: number;                         // 1..999
+  machine_cap: number;                          // 0..999
+  per_station_machine_limit?: number | null;    // 0..999, optional
+  allow_add_machines: boolean;                  // Machine_Toggle, default disabled
+  operator_weight: number;                      // 0..1000
+  machine_weight: number;                       // 0..1000
+  utilization_ceiling: number;                  // 0.50..1.00 healthy load ceiling
+}
+
+/** One plain-language difference between the current and proposed layout. */
+export interface ChangeListItem {
+  kind: "operation_move" | "operator_delta" | "machine_delta";
+  station_id: string;
+  station_name: string;
+  operation_name?: string | null;      // for operation_move
+  from_station_id?: string | null;     // for operation_move
+  from_station_name?: string | null;   // for operation_move
+  delta?: number | null;               // signed, for operator_delta and machine_delta
+  description: string;                 // plain-language line
+}
+
+/** The outcome vocabulary returned by the optimize endpoint. */
+export type OptimizeStatus =
+  | "optimal"
+  | "feasible_timeout"
+  | "infeasible"
+  | "no_feasible_timeout"
+  | "validation_failed"
+  | "no_improvement";
+
+/** The Auto-Optimize request: a layout, constraints, and a sim config. */
+export interface OptimizeRequest {
+  layout: Layout;
+  constraints: OptimizeConstraints;
+  config: SimulationConfig;
+}
+
+/** The Auto-Optimize response. */
+export interface OptimizeResponse {
+  status: OptimizeStatus;
+  proposed_layout?: Layout | null;
+  before_metrics?: SimulationResult | null;
+  after_metrics?: SimulationResult | null;
+  change_list: ChangeListItem[];
+  optimality_gap_pct?: number | null;      // 0.00..100.00 for feasible_timeout
+  binding_category?: "takt_capacity" | "operator_cap" | "machine_cap" | "locks" | null;
+  message: string;
+}

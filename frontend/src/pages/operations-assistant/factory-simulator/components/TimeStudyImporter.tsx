@@ -207,7 +207,7 @@ export function TimeStudyImporter() {
                   <strong>Import Factory Data</strong>: drag &amp; drop Excel file(s) or <span className="ts-importer__link">browse</span>
                 </p>
                 <p className="ts-importer__dropzone-secondary">
-                  Routing/time-study + optional machine sheet · one or more .xlsx / .xls · an order column auto-connects the line
+                  Check File Format Guide for Detailed Requirements · one or more .xlsx / .xls
                 </p>
               </div>
             </>
@@ -230,7 +230,7 @@ export function TimeStudyImporter() {
             onChange={(e) => setUseRowOrder(e.target.checked)}
           />
           <span className="ts-importer__row-order-text">
-            Use row order<br />as sequence
+            Use Row Order<br />As Sequence
           </span>
         </label>
 
@@ -318,7 +318,7 @@ export function TimeStudyImporter() {
                   </tbody>
                 </table>
                 <p className="ts-importer__guide-note">
-                  Put routing and machine data on separate sheets or separate files. Sheet
+                  Tip: Put routing and machine data on separate sheets or separate files. Sheet
                   names don’t matter (they’re auto-detected), and lookup/config tabs are
                   ignored. Column-name synonyms are accepted (e.g. “WS”, “Station”, “CT”).
                   Repeated readings of the same operation are averaged, then summed per
@@ -340,7 +340,7 @@ export function TimeStudyImporter() {
             margin: "4px 0 0 0",
             fontSize: "0.72rem",
             lineHeight: 1.3,
-            color: "#b0c8e0",
+            color: "#ff6b7a",
           }}
           role="status"
         >

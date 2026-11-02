@@ -1,5 +1,6 @@
 import type { Scenario } from "../types";
 import { useLayout } from "../context/LayoutContext";
+import "./ComparisonView.css";
 
 export interface ComparisonViewProps {
   scenarioA: Scenario | null;
@@ -74,6 +75,13 @@ export function ComparisonView({ scenarioA, scenarioB }: ComparisonViewProps) {
     <div className="comparison-view">
       <h3>Scenario Comparison</h3>
 
+      <div className="comparison-head" aria-hidden="true">
+        <span className="comparison-head-metric">Metric</span>
+        <span className="comparison-head-num">Current</span>
+        <span className="comparison-head-num">After</span>
+        <span className="comparison-head-num">Change</span>
+      </div>
+
       <div className="comparison-throughput">
         <span className="comparison-label">Throughput</span>
         <span className="comparison-value-a">
@@ -92,6 +100,12 @@ export function ComparisonView({ scenarioA, scenarioB }: ComparisonViewProps) {
       </div>
 
       <h4>Per-Station Utilization</h4>
+      <div className="comparison-head" aria-hidden="true">
+        <span className="comparison-head-metric">Station</span>
+        <span className="comparison-head-num">Current</span>
+        <span className="comparison-head-num">After</span>
+        <span className="comparison-head-num">Change</span>
+      </div>
       <div className="comparison-station-list" role="list">
         {stationIds.map((stationId) => {
           const metricsA = resultA.stations.find(
@@ -135,6 +149,12 @@ export function ComparisonView({ scenarioA, scenarioB }: ComparisonViewProps) {
       </div>
 
       <h4>Per-Station Queue Length</h4>
+      <div className="comparison-head" aria-hidden="true">
+        <span className="comparison-head-metric">Station</span>
+        <span className="comparison-head-num">Current</span>
+        <span className="comparison-head-num">After</span>
+        <span className="comparison-head-num">Change</span>
+      </div>
       <div className="comparison-queue-list" role="list">
         {stationIds.map((stationId) => {
           const metricsA = resultA.stations.find(

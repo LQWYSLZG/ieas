@@ -230,6 +230,10 @@ class SimulationConfig(BaseModel):
     takt_time: Optional[float] = Field(default=None, description="Takt time in seconds")
     operator_count: Optional[int] = Field(default=None, ge=0,
         description="Supplied operators for the line. None => use sum of operator pools / requirements.")
+    seed: Optional[int] = Field(default=None,
+        description="Optional RNG seed. When set, the simulation is reproducible. "
+                    "Used by Auto-Optimize so the before and after runs are an "
+                    "apples-to-apples comparison; left None for normal runs.")
 
 
 # ═══════════════════════════════════════════════════════════════════════
