@@ -20,6 +20,6 @@ services:
       - key: ENV
         value: production
       - key: CORS_ALLOW_ORIGINS
-        value: https://lqwyslzg.github.io
+        value: https://lqwyslzg.github.io,https://forgeyi-ieas-product-preview.syrupy-daisy-0281.chatgpt.site
       - key: PYTHON_VERSION
         value: "3.11"
