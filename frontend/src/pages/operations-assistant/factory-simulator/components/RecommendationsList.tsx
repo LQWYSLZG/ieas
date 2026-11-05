@@ -180,7 +180,7 @@ export function RecommendationsList({ result }: RecommendationsListProps) {
       <>
         {result.lines!.map((line) => (
           <details key={line.line_id} style={{ marginBottom: "12px" }}>
-            <summary style={{ color: "#d4a017", fontSize: "0.9rem", cursor: "pointer", marginTop: "14px", marginBottom: "6px", fontWeight: 600, borderBottom: "1px solid rgba(212, 160, 23, 0.3)", paddingBottom: "4px" }}>{line.line_name}</summary>
+            <summary style={{ color: "#d4a017", fontSize: "0.9rem", cursor: "pointer", marginTop: "14px", marginBottom: "6px", fontWeight: 600, paddingBottom: "4px" }}>{line.line_name}</summary>
             {line.recommendations.length === 0 ? (
               <p style={{ color: "#a8b8e8", fontSize: "0.78rem", margin: 0 }}>No issues found. This line is running efficiently.</p>
             ) : (

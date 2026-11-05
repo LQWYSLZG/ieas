@@ -23,13 +23,24 @@
 }
 
 .factory-simulator-back-link {
-  color: #b0c8e0;
-  text-decoration: none;
-  font-size: 0.85rem;
-  transition: color 0.15s;
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 44px;
+  flex: none;
+  border: 1px solid #7799bb;
+  border-radius: 5px;
+  color: #c2d9ef;
+  background: #202b36;
 }
-.factory-simulator-back-link:hover {
-  color: #d4a017;
+.factory-simulator-back-link:is(:hover, :focus-visible) {
+  color: #fff;
+  background: #30465a;
+  border-color: #c2d9ef;
+}
+.factory-simulator-back-link:focus-visible {
+  outline: 2px solid #a8c7e7;
+  outline-offset: 3px;
 }
 
 .factory-simulator-title {

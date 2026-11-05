@@ -519,7 +519,11 @@ function FactorySimulatorContent() {
       {/* Header row */}
       <header className="factory-simulator-header">
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <Link to="/operations-assistant" className="factory-simulator-back-link">← Back</Link>
+          <Link to="/operations-assistant" className="factory-simulator-back-link" aria-label="Back to Manufacturing Operations" title="Back to Manufacturing Operations">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
           <h1 className="factory-simulator-title">Factory Floor Simulator</h1>
         </div>
       </header>

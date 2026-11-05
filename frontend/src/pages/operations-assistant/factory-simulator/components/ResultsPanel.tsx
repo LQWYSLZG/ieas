@@ -752,7 +752,7 @@ export function ResultsPanel({ result, targetThroughput, onViewRecommendations, 
     <div>
       {lines.map((line) => (
         <details key={line.line_id}>
-          <summary style={{ ...sectionTitle, fontSize: "0.9rem", marginTop: "14px", borderBottom: "1px solid rgba(212, 160, 23, 0.3)", paddingBottom: "4px" }}>
+          <summary style={{ ...sectionTitle, fontSize: "0.9rem", marginTop: "14px", paddingBottom: "4px" }}>
             {line.line_name}
           </summary>
           <div style={{ marginTop: "8px" }}>
