@@ -10,6 +10,8 @@ import {
 } from "../config/appRegistry";
 import { asset } from "../lib/asset";
 
+import { CircuitBoard } from "./CircuitBoard";
+
 export interface SidebarProps {
   onNavigate: () => void;
 }
@@ -23,11 +25,12 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
   return (
     <>
+      <CircuitBoard />
       {/* Suite icon — clickable, navigates to home */}
       <div className="sidebar-icon-home">
         <NavLink to="/" onClick={onNavigate}>
           <img
-            src={asset("/icons/suite-icon.png")}
+            src={asset("/icons/suite-gold.svg")}
             alt="IE Suite Home"
             className="sidebar-suite-icon"
           />
@@ -64,7 +67,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {plannedModules.map((module) => (
         <div className="sidebar-coming-item" key={module.id}>
-          🔒 {module.displayName.replace(" Assistant", "")}
+          <img className="sidebar-link-icon" src={asset(module.icon)} alt="" />{module.displayName.replace(" Assistant", "")}
         </div>
       ))}
 

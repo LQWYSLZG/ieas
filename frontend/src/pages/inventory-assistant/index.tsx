@@ -1,258 +1,28 @@
-/**
- * Inventory Management Assistant
- *
- * Tools dashboard for supply chain optimisation including demand forecasting,
- * inventory analysis, customer segmentation, and stock control.
- */
-
 import { useEffect } from "react";
-import { asset } from "../../lib/asset";
+import { AssistantHeader } from "../../components/AssistantHeader";
 import { warmUpBackend } from "../../lib/warmup";
 
+const tools = [
+  { name: "ABC Inventory Analysis", description: "Classify inventory items by value contribution to focus resources on high-impact stock.", path: "M4 20V12h4v8m2 0V8h4v12m2 0V4h4v16" },
+  { name: "Customer Segmentation", description: "Group customers by purchasing behaviour to tailor inventory strategies per segment.", path: "M9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6m8 2a3 3 0 1 0 0-6 3 3 0 0 0 0 6M3 21v-5a6 6 0 0 1 12 0v5m2-8q4 0 4 5v3" },
+  { name: "Demand Forecast", description: "Predict future demand using historical data to optimise replenishment planning.", path: "M3 3v18h18M6 16l4-5 4 2 6-8m-5 0h5v5" },
+  { name: "Demand Health", description: "Monitor demand signal quality and detect anomalies that could distort forecasts.", path: "M2 12h5l3-7 4 14 3-7h5" },
+  { name: "Stock Control & Optimisation", description: "Calculate optimal reorder points, safety stock levels, and EOQ to minimise holding costs.", path: "m3 7 9-4 9 4-9 5zM3 7v11l9 4 9-4V7M12 12v10" },
+];
+
 export default function InventoryAssistant() {
-  // Wake-on-entry: start warming the Render free-tier backend when this
-  // assistant is opened. Throttled and fire-and-forget, so it never blocks
-  // or breaks the UI.
-  useEffect(() => {
-    warmUpBackend();
-  }, []);
-
-  return (
-    <div
-      style={{
-        padding: "2.5rem",
-        color: "var(--color-text-primary, #fff)",
-        fontFamily: "var(--font-family, 'Segoe UI', sans-serif)",
-        maxWidth: "1200px",
-      }}
-    >
-      {/* App header with icon and name */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1.2rem",
-          marginBottom: "0.75rem",
-        }}
-      >
-        <img
-          src={asset("/icons/inventory-assistant.png")}
-          alt=""
-          style={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "12px",
-          }}
-        />
-        <div>
-          <h1
-            style={{
-              color: "var(--color-accent, #d4a017)",
-              fontSize: "2rem",
-              fontWeight: 700,
-              margin: 0,
-              lineHeight: 1.2,
-            }}
-          >
-            Inventory Management Assistant
-          </h1>
-          <p
-            style={{
-              fontSize: "1rem",
-              color: "var(--color-text-secondary, #b0b8c9)",
-              margin: "6px 0 0 0",
-              lineHeight: 1.5,
-            }}
-          >
-            Forecast demand, optimise stock levels, and reduce waste across your supply chain.
-          </p>
-        </div>
-      </header>
-
-      {/* Spacer between header and tools */}
-      <hr
-        style={{
-          border: "none",
-          borderTop: "2px solid #2d6a4f",
-          margin: "2rem 0 2.5rem 0",
-        }}
-      />
-
-      {/* Tools section */}
-      <section>
-        <h2
-          style={{
-            fontSize: "1.3rem",
-            color: "var(--color-text-primary, #fff)",
-            marginBottom: "1.2rem",
-            fontWeight: 600,
-          }}
-        >
-          Tools
-        </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "1.2rem",
-          }}
-        >
-          {/* ABC Inventory Analysis */}
-          <div
-            style={{
-              padding: "1.8rem",
-              background: "var(--color-surface, #1e2a3a)",
-              borderRadius: "12px",
-              border: "1px solid #2d6a4f", borderTop: "3px solid #2d6a4f",
-            }}
-          >
-            <h3
-              style={{
-                color: "var(--color-accent, #d4a017)",
-                fontSize: "1.15rem",
-                fontWeight: 600,
-                marginBottom: "0.6rem",
-              }}
-            >
-              📊 ABC Inventory Analysis
-            </h3>
-            <p
-              style={{
-                color: "var(--color-text-secondary, #b0b8c9)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Classify inventory items by value contribution to focus resources on high-impact stock.
-            </p>
-          </div>
-
-          {/* Customer Segmentation */}
-          <div
-            style={{
-              padding: "1.8rem",
-              background: "var(--color-surface, #1e2a3a)",
-              borderRadius: "12px",
-              border: "1px solid #2d6a4f", borderTop: "3px solid #2d6a4f",
-            }}
-          >
-            <h3
-              style={{
-                color: "var(--color-accent, #d4a017)",
-                fontSize: "1.15rem",
-                fontWeight: 600,
-                marginBottom: "0.6rem",
-              }}
-            >
-              👥 Customer Segmentation
-            </h3>
-            <p
-              style={{
-                color: "var(--color-text-secondary, #b0b8c9)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Group customers by purchasing behaviour to tailor inventory strategies per segment.
-            </p>
-          </div>
-
-          {/* Demand Forecast */}
-          <div
-            style={{
-              padding: "1.8rem",
-              background: "var(--color-surface, #1e2a3a)",
-              borderRadius: "12px",
-              border: "1px solid #2d6a4f", borderTop: "3px solid #2d6a4f",
-            }}
-          >
-            <h3
-              style={{
-                color: "var(--color-accent, #d4a017)",
-                fontSize: "1.15rem",
-                fontWeight: 600,
-                marginBottom: "0.6rem",
-              }}
-            >
-              📈 Demand Forecast
-            </h3>
-            <p
-              style={{
-                color: "var(--color-text-secondary, #b0b8c9)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Predict future demand using historical data to optimise replenishment planning.
-            </p>
-          </div>
-
-          {/* Demand Health */}
-          <div
-            style={{
-              padding: "1.8rem",
-              background: "var(--color-surface, #1e2a3a)",
-              borderRadius: "12px",
-              border: "1px solid #2d6a4f", borderTop: "3px solid #2d6a4f",
-            }}
-          >
-            <h3
-              style={{
-                color: "var(--color-accent, #d4a017)",
-                fontSize: "1.15rem",
-                fontWeight: 600,
-                marginBottom: "0.6rem",
-              }}
-            >
-              🩺 Demand Health
-            </h3>
-            <p
-              style={{
-                color: "var(--color-text-secondary, #b0b8c9)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Monitor demand signal quality and detect anomalies that could distort forecasts.
-            </p>
-          </div>
-
-          {/* Stock Control & Optimisation */}
-          <div
-            style={{
-              padding: "1.8rem",
-              background: "var(--color-surface, #1e2a3a)",
-              borderRadius: "12px",
-              border: "1px solid #2d6a4f", borderTop: "3px solid #2d6a4f",
-            }}
-          >
-            <h3
-              style={{
-                color: "var(--color-accent, #d4a017)",
-                fontSize: "1.15rem",
-                fontWeight: 600,
-                marginBottom: "0.6rem",
-              }}
-            >
-              📦 Stock Control & Optimisation
-            </h3>
-            <p
-              style={{
-                color: "var(--color-text-secondary, #b0b8c9)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              Calculate optimal reorder points, safety stock levels, and EOQ to minimise holding costs.
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+  useEffect(() => { warmUpBackend(); }, []);
+  return <div className="assistant-page assistant-inventory">
+    <AssistantHeader icon="/icons/inventory-assistant.png" title="Inventory Management Assistant" />
+    <section aria-labelledby="inventory-tools">
+      <div className="assistant-section-heading"><h2 id="inventory-tools">YOUR SUPPLY CHAIN TOOLKIT</h2></div>
+      <div className="assistant-tool-grid">
+        {tools.map(tool => <article className="assistant-tool" key={tool.name}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={tool.path} /></svg>
+          <h3>{tool.name}</h3><p>{tool.description}</p>
+        </article>)}
+      </div>
+    </section>
+    <footer className="assistant-footer">© 2026 FORGEYI · Industrial Engineering Assistant Suite</footer>
+  </div>;
 }

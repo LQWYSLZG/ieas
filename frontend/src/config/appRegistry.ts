@@ -61,7 +61,7 @@ export const appRegistry: AppModuleConfig[] = [
     id: "production-assistant",
     displayName: "Production Planning Assistant",
     routePath: "/production-assistant",
-    icon: "/icons/production-assistant.png",
+    icon: "/icons/production-assistant.svg",
     status: "planned",
     description:
       "Translate demand signals into production schedules and material plans.",
@@ -74,7 +74,7 @@ export const appRegistry: AppModuleConfig[] = [
     id: "quality-assistant",
     displayName: "Quality Control Assistant",
     routePath: "/quality-assistant",
-    icon: "/icons/quality-assistant.png",
+    icon: "/icons/quality-assistant.svg",
     status: "planned",
     description: "Monitor, analyse, and improve product and process quality.",
     order: 4,

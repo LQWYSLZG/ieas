@@ -1,103 +1,57 @@
-/**
- * LandingPage — Exact match to the old Streamlit home page.
- * Buttons are OUTSIDE and BELOW the cards (separate elements), same as the old app.
- */
-
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { appRegistry, getSortedRegistry, AppModuleConfig } from "../config/appRegistry";
-import { asset } from "../lib/asset";
+import { appRegistry, getSortedRegistry } from "../config/appRegistry";
 import { warmUpBackend } from "../lib/warmup";
 
+import { gsap } from "gsap";
+import { CategoryPlate } from "./CategoryPlate";
+
+import { CircuitBoard } from "../components/CircuitBoard";
+import { asset } from "../lib/asset";
+const categories: Record<string, { summary: string }> = {
+  "inventory-assistant": { summary: "Manage stock and demand across your supply chain." },
+  "operations-assistant": { summary: "Understand and improve how your factory floor runs." },
+  "production-assistant": { summary: "Coordinate production schedules, capacity, and materials." },
+  "quality-assistant": { summary: "Assess product quality and process consistency." },
+};
+
 export function LandingPage() {
-  const apps = getSortedRegistry(appRegistry);
-
-  // Wake-on-entry: start warming the Render free-tier backend as soon as the
-  // suite landing page mounts. Throttled and fire-and-forget, so it never
-  // blocks rendering.
+  const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    warmUpBackend();
+    const motion = gsap.matchMedia();
+    motion.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.from(".plate-object", { y: 7, duration: .42, stagger: .06, ease: "power2.out" });
+    }, root);
+    return () => motion.revert();
   }, []);
+  useEffect(() => { warmUpBackend(); }, []);
 
   return (
-    <div className="landing-page">
-      {/* Header — gradient with icon + title on same line */}
-      <header className="landing-header">
-        <div className="landing-header-row">
-          <img
-            className="landing-header-icon"
-            src={asset("/icons/suite-icon.png")}
-            alt="Industrial Engineering Assistant Suite icon"
-          />
-          <h1 className="landing-title">Industrial Engineering Assistant Suite</h1>
+    <div className="suite-home" ref={root}>
+      <CircuitBoard />
+      <section className="directory" aria-labelledby="directory-title">
+        <header className="directory-heading">
+          <h1 id="directory-title">Industrial Engineering Assistant Suite</h1>
+          <p>BUILT FOR ENGINEERS</p>
+        </header>
+        <div className="directory-grid">
+          {getSortedRegistry(appRegistry).map(app => {
+            const category = categories[app.id];
+            const title = app.displayName.replace(/ Assistant$/, "");
+            const active = app.status === "active";
+            const content = <>
+              <div className="plate-wrap"><CategoryPlate id={app.id} /></div>
+              <h2><img src={asset(app.icon)} alt="" />{title}</h2>
+              <p>{category?.summary ?? app.description}</p>
+              <span className="directory-action">{active ? "OPEN APP" : "COMING SOON"}</span>
+            </>;
+            return active
+              ? <Link className="directory-card" key={app.id} to={app.routePath} aria-label={`Open ${title}`}>{content}</Link>
+              : <article key={app.id} className="directory-card planned">{content}</article>;
+          })}
         </div>
-        <p className="landing-tagline">
-          INVENTORY · PRODUCTION · OPERATIONS · QUALITY
-        </p>
-        <p className="landing-subtitle">BUILT FOR ENGINEERS</p>
-      </header>
-
-      {/* Hierarchy Bar */}
-      <div className="landing-hierarchy-bar">
-        Each assistant targets a different layer of your operation. Select where you need it most to get started.
-      </div>
-
-      {/* 4-column Card Grid */}
-      <div className="landing-grid">
-        {apps.map((app) =>
-          app.status === "active" ? (
-            <ActiveCardWithButton key={app.id} app={app} />
-          ) : (
-            <PlannedCardSlot key={app.id} app={app} />
-          )
-        )}
-      </div>
-
-      {/* Footer */}
-      <footer className="landing-footer">
-        © 2026 FORGEYI · Industrial Engineering Assistant Suite · Data is not stored or shared
-      </footer>
-    </div>
-  );
-}
-
-/** Active card + button below it (button is outside the card) */
-function ActiveCardWithButton({ app }: { app: AppModuleConfig }) {
-  return (
-    <div className="landing-card-slot">
-      <article className="landing-card landing-card--active">
-        <h3 className="landing-card-name">
-          <img
-            className="landing-card-title-icon"
-            src={asset(app.icon)}
-            alt=""
-          />
-          {app.displayName}
-        </h3>
-        <p className="landing-card-tagline">{app.tagline}</p>
-        <p className="landing-card-features-text">
-          {app.features.map((feature, i) => (
-            <span key={i}>✦ {feature}<br /></span>
-          ))}
-        </p>
-      </article>
-      <div className="landing-card-btn-wrapper">
-        <Link to={app.routePath} className="landing-card-nav-btn">
-          Open {app.displayName} →
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-/** Planned card (no button) */
-function PlannedCardSlot({ app }: { app: AppModuleConfig }) {
-  return (
-    <div className="landing-card-slot">
-      <article className="landing-card landing-card--planned">
-        <h3 className="landing-card-name">🔒 {app.displayName}</h3>
-        <span className="landing-card-badge">COMING SOON</span>
-      </article>
+      </section>
+      <footer className="exhibit-footer">© 2026 FORGEYI · Industrial Engineering Assistant Suite · Data is not stored or shared</footer>
     </div>
   );
 }
